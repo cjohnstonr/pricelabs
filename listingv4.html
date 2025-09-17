@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PriceLabs Dashboard v2</title>
+    <title>PriceLabs Dashboard v4</title>
     <!-- Chart.js for graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Day.js for date formatting -->
@@ -361,15 +361,22 @@
             color: #7c3aed;
         }
         
+        /* Gap Nights column styling */
+        tbody td:nth-child(5) {
+            font-weight: 600;
+            text-align: center;
+            color: #dc2626;
+        }
+        
         /* Market occupancy columns styling */
-        tbody td:nth-child(5),
         tbody td:nth-child(6),
-        tbody td:nth-child(7) {
+        tbody td:nth-child(7),
+        tbody td:nth-child(8) {
             font-weight: 600;
             text-align: center;
         }
         
-        tbody td:nth-child(5) {
+        tbody td:nth-child(6) {
             border-left: 2px solid #e2e8f0;
             border-right: 2px solid #e2e8f0;
         }
@@ -421,6 +428,42 @@
         
         .weekend {
             background: #fef3c7;
+        }
+        
+        /* Gap border grouping */
+        .gap-single {
+            border: 2px solid #dc2626;
+            border-radius: 6px;
+            background: rgba(220, 38, 38, 0.02);
+        }
+        
+        .gap-first {
+            border: 2px solid #dc2626;
+            border-bottom: none;
+            border-radius: 6px 6px 0 0;
+            background: rgba(220, 38, 38, 0.02);
+        }
+        
+        .gap-middle {
+            border-left: 2px solid #dc2626;
+            border-right: 2px solid #dc2626;
+            border-top: none;
+            border-bottom: none;
+            background: rgba(220, 38, 38, 0.02);
+        }
+        
+        .gap-last {
+            border: 2px solid #dc2626;
+            border-top: none;
+            border-radius: 0 0 6px 6px;
+            background: rgba(220, 38, 38, 0.02);
+        }
+        
+        .gap-single:hover,
+        .gap-first:hover,
+        .gap-middle:hover,
+        .gap-last:hover {
+            background: rgba(220, 38, 38, 0.05);
         }
         
         /* Responsive */
@@ -693,7 +736,7 @@
                         <label for="availability-filter">Filter:</label>
                         <select id="availability-filter" class="filter-select" onchange="updatePricingTable()">
                             <option value="all">Show All Days</option>
-                            <option value="available">Hide Unavailable Days</option>
+                            <option value="available" selected>Hide Unavailable Days</option>
                         </select>
                     </div>
                 </div>
@@ -704,6 +747,7 @@
                             <th>Day</th>
                             <th>Our Price</th>
                             <th>Min Stay</th>
+                            <th>Gap Nights</th>
                             <th>Market Occ%</th>
                             <th>Mkt LY%</th>
                             <th>Mkt STLY%</th>
@@ -1293,12 +1337,50 @@
             tbody.innerHTML = '';
             
             if (!pricingData || !pricingData[0] || !pricingData[0].data) {
-                tbody.innerHTML = '<tr><td colspan="13">No pricing data available</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="14">No pricing data available</td></tr>';
                 return;
             }
             
             const priceData = pricingData[0].data.slice(0, 90);  // Get first 90 days
             const filterValue = document.getElementById('availability-filter').value;
+            
+            // Calculate gap nights for each day
+            function calculateGapNights(index) {
+                const currentDay = priceData[index];
+                
+                // Only calculate for available days
+                if (currentDay.demand_desc === 'Unavailable') return 0;
+                
+                // Count total unavailable days in dataset
+                const totalUnavailableDays = priceData.filter(day => day.demand_desc === 'Unavailable').length;
+                if (totalUnavailableDays === 0) return 'N/A';
+                
+                // Find previous unavailable day
+                let prevUnavailableIndex = -1;
+                for (let i = index - 1; i >= 0; i--) {
+                    if (priceData[i].demand_desc === 'Unavailable') {
+                        prevUnavailableIndex = i;
+                        break;
+                    }
+                }
+                
+                // Find next unavailable day
+                let nextUnavailableIndex = -1;
+                for (let i = index + 1; i < priceData.length; i++) {
+                    if (priceData[i].demand_desc === 'Unavailable') {
+                        nextUnavailableIndex = i;
+                        break;
+                    }
+                }
+                
+                // Must have bookings on both sides to be a gap
+                if (prevUnavailableIndex === -1 || nextUnavailableIndex === -1) {
+                    return 'N/A'; // Not a gap, just continuous availability
+                }
+                
+                // Count consecutive available days between the bookings
+                return nextUnavailableIndex - prevUnavailableIndex - 1;
+            }
             
             // Get percentile data if available
             let percentileData = null;
@@ -1317,11 +1399,52 @@
                 }
             }
             
+            // First pass: collect gap information for border grouping
+            const gapInfo = [];
+            const visibleRows = [];
+            
             priceData.forEach((day, index) => {
                 // Skip unavailable days if filter is set to 'available'
                 if (filterValue === 'available' && day.demand_desc === 'Unavailable') {
                     return;
                 }
+                
+                const gapNights = calculateGapNights(index);
+                visibleRows.push({
+                    day,
+                    index,
+                    gapNights
+                });
+            });
+            
+            // Second pass: determine gap group positions
+            let currentGapId = null;
+            let gapGroupStart = -1;
+            
+            visibleRows.forEach((rowData, visibleIndex) => {
+                const { day, index, gapNights } = rowData;
+                
+                if (gapNights !== 'N/A' && gapNights !== 0) {
+                    if (currentGapId !== gapNights || visibleIndex - 1 !== gapGroupStart + (visibleIndex - gapGroupStart - 1)) {
+                        // New gap group
+                        currentGapId = gapNights;
+                        gapGroupStart = visibleIndex;
+                    }
+                } else {
+                    currentGapId = null;
+                    gapGroupStart = -1;
+                }
+                
+                gapInfo.push({
+                    hasGap: gapNights !== 'N/A' && gapNights !== 0,
+                    gapValue: gapNights,
+                    gapId: currentGapId
+                });
+            });
+            
+            // Third pass: render rows with gap border classes
+            visibleRows.forEach((rowData, visibleIndex) => {
+                const { day, index, gapNights } = rowData;
                 
                 const row = document.createElement('tr');
                 
@@ -1372,11 +1495,32 @@
                 else if (demandText.includes('Medium')) demandClass = 'demand-medium';
                 else if (demandText.includes('High')) demandClass = 'demand-high';
                 
+                // Add gap border styling
+                const currentGapInfo = gapInfo[visibleIndex];
+                if (currentGapInfo && currentGapInfo.hasGap) {
+                    const prevGapInfo = visibleIndex > 0 ? gapInfo[visibleIndex - 1] : null;
+                    const nextGapInfo = visibleIndex < gapInfo.length - 1 ? gapInfo[visibleIndex + 1] : null;
+                    
+                    const isFirstInGap = !prevGapInfo || !prevGapInfo.hasGap || prevGapInfo.gapId !== currentGapInfo.gapId;
+                    const isLastInGap = !nextGapInfo || !nextGapInfo.hasGap || nextGapInfo.gapId !== currentGapInfo.gapId;
+                    
+                    if (isFirstInGap && isLastInGap) {
+                        row.classList.add('gap-single');
+                    } else if (isFirstInGap) {
+                        row.classList.add('gap-first');
+                    } else if (isLastInGap) {
+                        row.classList.add('gap-last');
+                    } else {
+                        row.classList.add('gap-middle');
+                    }
+                }
+                
                 row.innerHTML = `
                     <td class="date-cell">${date.format('MMM D')}</td>
                     <td>${dayOfWeek}</td>
                     <td><span class="our-price">$${day.price}</span></td>
                     <td>${day.min_stay || 1}</td>
+                    <td>${gapNights}</td>
                     <td>${marketOcc}</td>
                     <td>${marketOccLY}</td>
                     <td>${marketOccSTLY}</td>

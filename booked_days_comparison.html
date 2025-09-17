@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booked Days Comparison - PriceLabs Dashboard</title>
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Day.js for date formatting -->
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-content {
+            text-align: center;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Header Section */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 20px 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .component-info h1 {
+            font-size: 24px;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+        
+        .component-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .meta-item span {
+            font-weight: 600;
+            color: #334155;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .listing-selector {
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: white;
+            min-width: 200px;
+        }
+        
+        .refresh-btn {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .refresh-btn:hover {
+            background: #5a67d8;
+        }
+        
+        /* Main Content */
+        .main-content {
+            max-width: 1400px;
+            margin: 30px auto;
+            padding: 0 30px;
+        }
+        
+        /* Component Container */
+        .comparison-component {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        
+        .component-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px 25px;
+        }
+        
+        .component-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .component-description {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        
+        /* Table Styles */
+        .table-container {
+            overflow-x: auto;
+            background: white;
+        }
+        
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .comparison-table th {
+            background: #f8fafc;
+            padding: 12px 15px;
+            text-align: left;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+        
+        .comparison-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+        }
+        
+        .comparison-table tbody tr:hover {
+            background: #f9fafb;
+        }
+        
+        /* Status indicators */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        
+        .status-over {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+        
+        .status-under {
+            background: #f0fdf4;
+            color: #16a34a;
+        }
+        
+        .status-even {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        /* Price styling */
+        .price {
+            font-weight: 600;
+            color: #111827;
+        }
+        
+        .price-over {
+            color: #dc2626;
+        }
+        
+        .price-under {
+            color: #16a34a;
+        }
+        
+        /* Percentage styling */
+        .percentage {
+            font-weight: 600;
+        }
+        
+        .percentage-positive {
+            color: #dc2626;
+        }
+        
+        .percentage-negative {
+            color: #16a34a;
+        }
+        
+        /* Error and empty states */
+        .error-message, .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #6b7280;
+        }
+        
+        .error-message {
+            color: #dc2626;
+            background: #fef2f2;
+        }
+        
+        /* Summary stats */
+        .summary-stats {
+            padding: 20px 25px;
+            background: #f8fafc;
+            border-top: 1px solid #e5e7eb;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .stat-card {
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-weight: 500;
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .controls {
+                justify-content: stretch;
+            }
+            
+            .listing-selector {
+                min-width: auto;
+                flex: 1;
+            }
+            
+            .main-content {
+                padding: 0 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div>Loading booked days comparison...</div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="component-info">
+                <h1>Booked Days Comparison Component</h1>
+                <div class="component-meta">
+                    <div class="meta-item">
+                        <span id="totalBookings">0</span> booked periods
+                    </div>
+                    <div class="meta-item">
+                        <span id="avgVariance">-</span> avg variance
+                    </div>
+                    <div class="meta-item">
+                        <span id="bedroomCategory">-</span> bedroom category
+                    </div>
+                </div>
+            </div>
+            <div class="controls">
+                <select id="listingSelector" class="listing-selector">
+                    <option value="">Select a listing...</option>
+                </select>
+                <button id="refreshBtn" class="refresh-btn" onclick="loadData()">Refresh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="comparison-component">
+            <div class="component-header">
+                <div class="component-title">Booked vs Market Median Comparison</div>
+                <div class="component-description">
+                    Compare your actual booked rates against market median prices for your bedroom category. 
+                    Only shows confirmed bookings with revenue data.
+                </div>
+            </div>
+            
+            <div class="table-container">
+                <table class="comparison-table">
+                    <thead>
+                        <tr>
+                            <th>Check-in Date</th>
+                            <th>Duration</th>
+                            <th>Nightly Rate</th>
+                            <th>Market Median</th>
+                            <th>Variance</th>
+                            <th>Performance</th>
+                            <th>Total Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody id="comparisonTableBody">
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div>No booked days found for the selected listing.</div>
+                <div style="font-size: 12px; margin-top: 8px;">Try selecting a different listing or check if reservation data is available.</div>
+            </div>
+            
+            <div id="errorState" class="error-message" style="display: none;">
+                <div>Error loading comparison data.</div>
+                <div style="font-size: 12px; margin-top: 8px;">Please try refreshing or contact support if the issue persists.</div>
+            </div>
+            
+            <div id="summaryStats" class="summary-stats" style="display: none;">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="statTotalBookings">0</div>
+                        <div class="stat-label">Total Bookings</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statAvgNightly">$0</div>
+                        <div class="stat-label">Avg Nightly Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statAvgMedian">$0</div>
+                        <div class="stat-label">Avg Market Median</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="statOverallVariance">0%</div>
+                        <div class="stat-label">Overall Performance</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let listings = [];
+        let currentListing = null;
+        let reservationData = [];
+        let neighborhoodData = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadListings();
+        });
+
+        // Load available listings
+        async function loadListings() {
+            try {
+                const response = await fetch('http://localhost:5050/api/refresh');
+                const result = await response.json();
+                
+                listings = result.listings || [];
+                populateListingSelector();
+                
+                // Auto-select first listing if available
+                if (listings.length > 0) {
+                    document.getElementById('listingSelector').value = `${listings[0].id}|${listings[0].pms}`;
+                    await loadData();
+                }
+            } catch (error) {
+                console.error('Error loading listings:', error);
+                showError('Failed to load listings');
+            }
+        }
+
+        // Populate listing selector dropdown
+        function populateListingSelector() {
+            const selector = document.getElementById('listingSelector');
+            selector.innerHTML = '<option value="">Select a listing...</option>';
+            
+            listings.forEach(listing => {
+                const option = document.createElement('option');
+                option.value = `${listing.id}|${listing.pms}`;
+                option.textContent = `${listing.name} (${listing.pms})`;
+                selector.appendChild(option);
+            });
+            
+            // Add change event listener
+            selector.addEventListener('change', function() {
+                if (this.value) {
+                    loadData();
+                }
+            });
+        }
+
+        // Main data loading function
+        async function loadData() {
+            const selectedValue = document.getElementById('listingSelector').value;
+            if (!selectedValue) return;
+            
+            const [listingId, pms] = selectedValue.split('|');
+            currentListing = listings.find(l => l.id === listingId && l.pms === pms);
+            
+            if (!currentListing) return;
+            
+            showLoading(true);
+            
+            try {
+                // Load reservation data and neighborhood data in parallel
+                const [reservations, neighborhood] = await Promise.all([
+                    loadReservationData(listingId, pms),
+                    loadNeighborhoodData(listingId, pms)
+                ]);
+                
+                reservationData = reservations;
+                neighborhoodData = neighborhood;
+                
+                // Process and display comparison
+                processComparisonData();
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showError('Failed to load comparison data');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Load reservation data from API
+        async function loadReservationData(listingId, pms) {
+            const response = await fetch(`http://localhost:5050/api/reservation_data`);
+            const data = await response.json();
+            
+            // Filter for current listing and only booked status
+            return data.data?.filter(reservation => 
+                reservation.listing_id === listingId && 
+                reservation.booking_status === 'booked' &&
+                parseFloat(reservation.rental_revenue) > 0
+            ) || [];
+        }
+
+        // Load neighborhood data from API  
+        async function loadNeighborhoodData(listingId, pms) {
+            const response = await fetch(`http://localhost:5050/api/neighborhood/${listingId}?pms=${pms}`);
+            return await response.json();
+        }
+
+        // Process and display comparison data
+        function processComparisonData() {
+            if (!reservationData.length) {
+                showEmptyState();
+                return;
+            }
+            
+            // Get bedroom category for median lookup
+            const bedroomCount = currentListing.no_of_bedrooms || 1;
+            const bedroomCategory = bedroomCount.toString();
+            
+            // Update meta info
+            document.getElementById('bedroomCategory').textContent = `${bedroomCount} bedroom`;
+            
+            // Process each reservation
+            const comparisonRows = [];
+            let totalVariance = 0;
+            let validComparisons = 0;
+            
+            reservationData.forEach(reservation => {
+                const checkInDate = reservation.check_in;
+                const nighlyRate = parseFloat(reservation.rental_revenue) / reservation.no_of_days;
+                const medianPrice = getMedianPriceForDate(checkInDate, bedroomCategory);
+                
+                if (medianPrice > 0) {
+                    const variance = ((nighlyRate - medianPrice) / medianPrice) * 100;
+                    totalVariance += variance;
+                    validComparisons++;
+                    
+                    comparisonRows.push({
+                        checkIn: checkInDate,
+                        duration: reservation.no_of_days,
+                        nightlyRate: nighlyRate,
+                        medianPrice: medianPrice,
+                        variance: variance,
+                        totalRevenue: parseFloat(reservation.rental_revenue),
+                        currency: reservation.currency || 'USD'
+                    });
+                }
+            });
+            
+            // Sort by check-in date (newest first)
+            comparisonRows.sort((a, b) => new Date(b.checkIn) - new Date(a.checkIn));
+            
+            // Update table
+            displayComparisonTable(comparisonRows);
+            
+            // Update summary stats
+            updateSummaryStats(comparisonRows, validComparisons ? totalVariance / validComparisons : 0);
+            
+            // Update header meta
+            document.getElementById('totalBookings').textContent = comparisonRows.length;
+            document.getElementById('avgVariance').textContent = validComparisons ? 
+                `${(totalVariance / validComparisons).toFixed(1)}%` : 'N/A';
+            
+            // Show summary stats
+            document.getElementById('summaryStats').style.display = 'block';
+        }
+
+        // Get median price for a specific date and bedroom category
+        function getMedianPriceForDate(date, bedroomCategory) {
+            if (!neighborhoodData?.data?.["Future Percentile Prices"]?.Category?.[bedroomCategory]) {
+                return 0;
+            }
+            
+            const category = neighborhoodData.data["Future Percentile Prices"].Category[bedroomCategory];
+            const dateIndex = category.X_values?.indexOf(date);
+            
+            if (dateIndex >= 0 && category.Y_values?.[3]?.[dateIndex]) {
+                // Y_values[3] is "Median Booked Price" according to the labels
+                return category.Y_values[3][dateIndex];
+            }
+            
+            return 0;
+        }
+
+        // Display comparison table
+        function displayComparisonTable(rows) {
+            const tbody = document.getElementById('comparisonTableBody');
+            tbody.innerHTML = '';
+            
+            rows.forEach(row => {
+                const tr = document.createElement('tr');
+                
+                const performanceClass = row.variance > 5 ? 'status-over' : 
+                                       row.variance < -5 ? 'status-under' : 'status-even';
+                const performanceText = row.variance > 5 ? 'Above Market' : 
+                                       row.variance < -5 ? 'Below Market' : 'At Market';
+                
+                const priceClass = row.variance > 0 ? 'price-over' : 'price-under';
+                const percentageClass = row.variance > 0 ? 'percentage-positive' : 'percentage-negative';
+                
+                tr.innerHTML = `
+                    <td>${dayjs(row.checkIn).format('MMM DD, YYYY')}</td>
+                    <td>${row.duration} night${row.duration > 1 ? 's' : ''}</td>
+                    <td class="price ${priceClass}">$${row.nightlyRate.toFixed(0)}</td>
+                    <td class="price">$${row.medianPrice.toFixed(0)}</td>
+                    <td class="percentage ${percentageClass}">${row.variance >= 0 ? '+' : ''}${row.variance.toFixed(1)}%</td>
+                    <td><span class="status-badge ${performanceClass}">${performanceText}</span></td>
+                    <td class="price">$${row.totalRevenue.toFixed(0)}</td>
+                `;
+                
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Update summary statistics
+        function updateSummaryStats(rows, avgVariance) {
+            if (!rows.length) return;
+            
+            const totalBookings = rows.length;
+            const avgNightly = rows.reduce((sum, row) => sum + row.nightlyRate, 0) / totalBookings;
+            const avgMedian = rows.reduce((sum, row) => sum + row.medianPrice, 0) / totalBookings;
+            
+            document.getElementById('statTotalBookings').textContent = totalBookings;
+            document.getElementById('statAvgNightly').textContent = `$${avgNightly.toFixed(0)}`;
+            document.getElementById('statAvgMedian').textContent = `$${avgMedian.toFixed(0)}`;
+            
+            const varianceElement = document.getElementById('statOverallVariance');
+            varianceElement.textContent = `${avgVariance >= 0 ? '+' : ''}${avgVariance.toFixed(1)}%`;
+            varianceElement.className = 'stat-value ' + (avgVariance > 0 ? 'percentage-positive' : 'percentage-negative');
+        }
+
+        // Show loading state
+        function showLoading(show) {
+            document.getElementById('loadingOverlay').style.display = show ? 'flex' : 'none';
+        }
+
+        // Show empty state
+        function showEmptyState() {
+            document.getElementById('emptyState').style.display = 'block';
+            document.getElementById('summaryStats').style.display = 'none';
+            document.getElementById('errorState').style.display = 'none';
+            
+            // Clear table
+            document.getElementById('comparisonTableBody').innerHTML = '';
+        }
+
+        // Show error state
+        function showError(message) {
+            document.getElementById('errorState').style.display = 'block';
+            document.getElementById('emptyState').style.display = 'none';
+            document.getElementById('summaryStats').style.display = 'none';
+            
+            // Clear table
+            document.getElementById('comparisonTableBody').innerHTML = '';
+        }
+    </script>
+</body>
+</html>
