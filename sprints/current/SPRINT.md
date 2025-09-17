@@ -1,44 +1,50 @@
-# Sprint: 001-minimum-stay-column
+# Sprint: 002-pricing-optimization-integration
 
 ## TODO
-- [ ] Add minimum stay column header to pricing table
-- [ ] Extract min_stay data from pricing API response
-- [ ] Display minimum stay values in new table column
-- [x] Create booked days comparison table component page
-- [x] Integrate reservation data API endpoint for booked days
-- [x] Compare our booked rates vs median booked prices by bedroom category
-- [x] Calculate and display percentage over/under median
+- [ ] Create listingv5.html from listingv4.html as base
+- [ ] Move "Median Booked" column to position 4 (after Our Price)
+- [ ] Add "Our Avg vs Market" column (position 5)
+- [ ] Add "Optimized Target" column (position 6)  
+- [ ] Add "Price Adjustment %" column (position 7)
+- [ ] Create global insights variable (bookedDaysInsights)
+- [ ] Implement core pricing optimization calculation functions
+- [ ] Add CSS styling for optimization columns and color coding
+- [ ] Modify updatePricingTable() to include optimization calculations
+- [ ] Update booked days component to export insights globally
+- [ ] Add tooltips and visual indicators for user experience
+- [ ] Test with various listing scenarios and edge cases
 
 ## Requirements
 
-### 1. Minimum Stay Column (Original)
-Add a "Min Stay" column to the existing 60-Day Pricing Forecast table in listingv3.html that displays the minimum stay requirement for each date. The data should come from the existing pricing data that's already being fetched from the `/api/listing_prices/{listing_id}` endpoint.
+Transform the static 90-Day Pricing Forecast table into an intelligent pricing optimization tool by integrating historical booking performance data from the Booked Days Analysis component.
 
-**Table Location**: 60-Day Pricing Forecast table (lines 642-665 in listingv3.html)
-**Data Source**: `pricingData[0].data[].min_stay` field from existing API call
-**Positioning**: Insert between "Our Price" and "Market Occ%" columns
+**GOAL:** Create data-driven pricing recommendations by applying historical booking performance to future market pricing data.
 
-### 2. Booked Days Comparison Component (New)
-Create a standalone component-style page that compares our booked rates vs median booked prices for the same bedroom category.
+**KEY INTEGRATION:** 
+- Extract avgPercentVsMarket from Booked Days component
+- Apply to pricing forecast table with 4 new optimization columns:
+  - "Our Avg vs Market" (shows historical performance)
+  - "Optimized Target" (calculated: medianPrice * (1 + avgPercentVsMarket/100))
+  - "Price Adjustment %" (calculated: ((target - current) / current) * 100)
+  - Color coding for recommendations (green=increase, red=decrease, blue=optimal)
 
-**Features Required**:
-- Show only booked days (skip available days from pricing data)
-- Use reservation data API endpoint to get actual booked revenue
-- Get median booked prices from neighborhood data API for bedroom category
-- Calculate percentage over/under median for each booked day
-- Component-style implementation for easy dashboard integration
-- Responsive table design matching existing dashboard style
-
-**Data Sources**:
-- Reservation data: `/api/reservation_data` (rental_revenue, check_in, check_out, no_of_days)
-- Median pricing: `/api/neighborhood_data/{listing_id}` (Future Percentile Prices > Category > bedroom_count > Y_values[3] = Median Booked Price)
-- Listing info: `/api/listings` to get bedroom count for median lookup
+**PRIMARY FILE:** listingv5.html (enhanced copy of listingv4.html)
 
 ## Implementation Notes
-- Minimum stay data is already available in the `min_stay` field of each day's pricing data
-- No additional API calls needed - use existing `pricingData` variable
-- Position new column after "Our Price" to maintain logical flow
-- Use simple numeric display (e.g., "1", "2", "3") for minimum stay values
+
+**Data Flow:**
+1. Booked Days component calculates avgPercentVsMarket from historical data
+2. Global bookedDaysInsights variable stores this performance metric
+3. Pricing table uses avgPercentVsMarket to calculate optimization recommendations
+4. Visual indicators show pricing opportunities with color coding
+
+**Calculation Logic:**
+- optimizedTarget = medianPrice * (1 + avgPercentVsMarket/100)
+- adjustmentPercent = ((optimizedTarget - currentPrice) / currentPrice) * 100
+- Color coding: green (increase), red (decrease), blue (optimal range)
+
+**Table Restructure:**
+Move "Median Booked" next to "Our Price" and add 3 optimization columns before existing columns like "Min Stay" and "Gap Nights".
 
 ## Current Status
-Ready to implement - analyzing existing table structure and data flow.
+Sprint initialized. Ready to begin Phase 1: Create listingv5.html base file and restructure table columns.

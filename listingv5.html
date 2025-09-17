@@ -694,6 +694,56 @@
                 gap: 10px;
             }
         }
+
+        /* Pricing Optimization Styles */
+        .optimized-target { 
+            color: #2563eb; 
+            font-weight: 600; 
+        }
+        
+        .price-adjustment { 
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .increase-significant { 
+            color: #16a34a; 
+            background: #dcfce7; 
+        } /* >10% increase */
+        
+        .increase-moderate { 
+            color: #65a30d; 
+            background: #f7fee7; 
+        } /* 2-10% increase */
+        
+        .decrease-significant { 
+            color: #dc2626; 
+            background: #fef2f2; 
+        } /* >10% decrease */
+        
+        .decrease-moderate { 
+            color: #ea580c; 
+            background: #fff7ed; 
+        } /* 2-10% decrease */
+        
+        .optimal { 
+            color: #0891b2; 
+            background: #f0f9ff; 
+        } /* Within 2% */
+        
+        .our-avg-vs-market {
+            font-weight: 600;
+        }
+        
+        .our-avg-vs-market.positive {
+            color: #16a34a;
+        }
+        
+        .our-avg-vs-market.negative {
+            color: #dc2626;
+        }
     </style>
 </head>
 <body>
@@ -864,6 +914,10 @@
                             <th>Date</th>
                             <th>Day</th>
                             <th>Our Price</th>
+                            <th>Median Booked</th>
+                            <th>Our Avg vs Market</th>
+                            <th>Optimized Target</th>
+                            <th>Price Adjustment %</th>
                             <th>Min Stay</th>
                             <th>Gap Nights</th>
                             <th>Market Occ%</th>
@@ -872,7 +926,6 @@
                             <th>25th %ile</th>
                             <th>50th %ile</th>
                             <th>75th %ile</th>
-                            <th>Median Booked</th>
                             <th>90th %ile</th>
                             <th>Market Demand</th>
                         </tr>
@@ -979,6 +1032,14 @@
         let neighborhoodData = null;
         let occupancyChart = null;
         let priceTrendsChart = null;
+        
+        // Global variable for sharing booked days insights between components
+        let bookedDaysInsights = {
+            avgPercentVsMarket: null,
+            totalBookings: 0,
+            isDataAvailable: false,
+            lastCalculated: null
+        };
 
         // Check URL params on load
         window.addEventListener('DOMContentLoaded', () => {
@@ -1536,12 +1597,39 @@
             });
         }
 
+        // Pricing Optimization Calculation Functions
+        function calculateOptimizedTarget(medianPrice, avgPerformance) {
+            if (!avgPerformance || !medianPrice || medianPrice <= 0) return null;
+            return medianPrice * (1 + (avgPerformance / 100));
+        }
+
+        function calculatePriceAdjustment(currentPrice, targetPrice) {
+            if (!currentPrice || !targetPrice || currentPrice <= 0) return null;
+            return ((targetPrice - currentPrice) / currentPrice) * 100;
+        }
+
+        function getAdjustmentCategory(adjustmentPercent) {
+            if (adjustmentPercent === null || adjustmentPercent === undefined) return "no-data";
+            if (adjustmentPercent > 10) return "increase-significant";
+            if (adjustmentPercent > 2) return "increase-moderate"; 
+            if (adjustmentPercent < -10) return "decrease-significant";
+            if (adjustmentPercent < -2) return "decrease-moderate";
+            return "optimal";
+        }
+
+        function formatAdjustmentText(adjustmentPercent) {
+            if (adjustmentPercent === null || adjustmentPercent === undefined) return "N/A";
+            const absPercent = Math.abs(adjustmentPercent);
+            const action = adjustmentPercent > 0 ? "Increase" : "Decrease";
+            return `${action} ${absPercent.toFixed(1)}%`;
+        }
+
         function updatePricingTable() {
             const tbody = document.getElementById('pricing-table-body');
             tbody.innerHTML = '';
             
             if (!pricingData || !pricingData[0] || !pricingData[0].data) {
-                tbody.innerHTML = '<tr><td colspan="14">No pricing data available</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="17">No pricing data available</td></tr>';
                 return;
             }
             
@@ -1719,10 +1807,36 @@
                     }
                 }
                 
+                // Calculate optimization data
+                let optimizedTarget = null;
+                let adjustmentPercent = null;
+                let adjustmentText = "N/A";
+                let adjustmentClass = "no-data";
+                let avgPercentText = "N/A";
+                let avgPercentClass = "";
+
+                if (bookedDaysInsights.isDataAvailable && pMedian !== '-') {
+                    const medianPrice = parseFloat(pMedian.replace('$', ''));
+                    optimizedTarget = calculateOptimizedTarget(medianPrice, bookedDaysInsights.avgPercentVsMarket);
+                    
+                    if (optimizedTarget && day.price) {
+                        adjustmentPercent = calculatePriceAdjustment(day.price, optimizedTarget);
+                        adjustmentText = formatAdjustmentText(adjustmentPercent);
+                        adjustmentClass = getAdjustmentCategory(adjustmentPercent);
+                    }
+                    
+                    avgPercentText = `${bookedDaysInsights.avgPercentVsMarket >= 0 ? '+' : ''}${bookedDaysInsights.avgPercentVsMarket.toFixed(1)}%`;
+                    avgPercentClass = bookedDaysInsights.avgPercentVsMarket >= 0 ? 'positive' : 'negative';
+                }
+
                 row.innerHTML = `
                     <td class="date-cell">${date.format('MMM D')}</td>
                     <td>${dayOfWeek}</td>
                     <td><span class="our-price">$${day.price}</span></td>
+                    <td>${pMedian}</td>
+                    <td class="our-avg-vs-market ${avgPercentClass}">${avgPercentText}</td>
+                    <td class="optimized-target">${optimizedTarget ? '$' + Math.round(optimizedTarget) : 'N/A'}</td>
+                    <td class="price-adjustment ${adjustmentClass}">${adjustmentText}</td>
                     <td>${day.min_stay || 1}</td>
                     <td>${gapNights}</td>
                     <td>${marketOcc}</td>
@@ -1731,7 +1845,6 @@
                     <td>${p25}</td>
                     <td>${p50}</td>
                     <td>${p75}</td>
-                    <td>${pMedian}</td>
                     <td>${p90}</td>
                     <td><span class="demand-badge ${demandClass}">${demandText}</span></td>
                 `;
@@ -1761,6 +1874,9 @@
                     
                     // Render the table
                     renderBookedDaysTable(comparisonData);
+                    
+                    // Refresh pricing table with optimization data now that insights are available
+                    updatePricingTable();
                 }
             } catch (error) {
                 console.error('Error loading booked days component:', error);
@@ -1859,6 +1975,14 @@
             
             // Calculate average percentage vs market
             const avgPercentVsMarket = comparisonData.reduce((sum, booking) => sum + booking.percentageVsMarket, 0) / totalBookings;
+            
+            // Store insights globally for pricing optimization
+            bookedDaysInsights = {
+                avgPercentVsMarket: avgPercentVsMarket,
+                totalBookings: totalBookings,
+                isDataAvailable: true,
+                lastCalculated: new Date().toISOString()
+            };
             
             document.getElementById('total-booked-days').textContent = 
                 comparisonData.reduce((sum, booking) => sum + booking.nights, 0);

@@ -4,14 +4,15 @@
 Web-based dashboard for analyzing PriceLabs property data with pricing forecasts, market comparisons, and performance metrics.
 
 ## Sprint Management
-**CURRENT_SPRINT**: 001-minimum-stay-column
-**SPRINT_COUNT**: 1
+**CURRENT_SPRINT**: 002-pricing-optimization-integration
+**SPRINT_COUNT**: 2
 **STARTED**: 2025-09-17
-**TODO_COUNT**: 3
-**COMPLETED**: 4
+**TODO_COUNT**: 12
+**COMPLETED**: 0
 
 ### Sprint History
-- 001-minimum-stay-column (current)
+- 001-minimum-stay-column (completed 2025-09-17)
+- 002-pricing-optimization-integration (current)
 
 ## Architecture Notes
 - Frontend: HTML/CSS/JavaScript with Chart.js
