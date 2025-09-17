@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Listing Overrides - Response Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: repeating-linear-gradient(
+                45deg,
+                transparent,
+                transparent 10px,
+                rgba(255, 255, 255, 0.05) 10px,
+                rgba(255, 255, 255, 0.05) 20px
+            );
+            animation: shimmer 3s linear infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            position: relative;
+            z-index: 1;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header p {
+            font-size: 16px;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .content {
+            padding: 32px;
+        }
+
+        .response-section {
+            margin-bottom: 32px;
+        }
+
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .section-icon {
+            width: 24px;
+            height: 24px;
+            background: #3b82f6;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .override-grid {
+            display: grid;
+            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+
+        .override-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 24px;
+            background: linear-gradient(135deg, #fefefe 0%, #f9fafb 100%);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .override-card:hover {
+            border-color: #10b981;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(16, 185, 129, 0.1);
+        }
+
+        .override-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981, #3b82f6);
+        }
+
+        .price-display {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .price-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #3b82f6;
+            line-height: 1;
+        }
+
+        .currency {
+            font-size: 18px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .price-type-badge {
+            background: #ddd6fe;
+            color: #7c3aed;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .override-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .detail-item {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #f3f4f6;
+            transition: background-color 0.2s ease;
+        }
+
+        .detail-item:hover {
+            background: #f9fafb;
+        }
+
+        .detail-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .date-value {
+            color: #8b5cf6;
+        }
+
+        .min-stay-value {
+            color: #f59e0b;
+        }
+
+        .json-viewer {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 24px;
+        }
+
+        .json-content {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .json-key {
+            color: #7dd3fc;
+        }
+
+        .json-string {
+            color: #86efac;
+        }
+
+        .json-number {
+            color: #fbbf24;
+        }
+
+        .json-bracket {
+            color: #f8fafc;
+        }
+
+        .actions {
+            margin-top: 32px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn.primary {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .action-btn.primary:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .action-btn.secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .action-btn.secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid #f3f4f6;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #3b82f6;
+            margin-bottom: 4px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 48px 32px;
+            color: #6b7280;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #e2e8f0;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 0 -10px;
+                border-radius: 0;
+            }
+
+            .header {
+                padding: 24px 20px;
+            }
+
+            .content {
+                padding: 24px 20px;
+            }
+
+            .override-details {
+                grid-template-columns: 1fr;
+            }
+
+            .actions {
+                flex-direction: column;
+            }
+
+            .price-value {
+                font-size: 28px;
+            }
+        }
+
+        .relative-time {
+            font-size: 12px;
+            color: #8b5cf6;
+            font-style: italic;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="success-icon">✓</div>
+            <h1>Override Updated Successfully</h1>
+            <p>Your listing pricing overrides have been updated</p>
+        </div>
+
+        <div class="content">
+            <!-- Summary Statistics -->
+            <div class="response-section">
+                <div class="section-title">
+                    <div class="section-icon">📊</div>
+                    Update Summary
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="overrideCount">1</div>
+                        <div class="stat-label">Overrides Updated</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalValue">$150</div>
+                        <div class="stat-label">Total Value</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="avgMinStay">2</div>
+                        <div class="stat-label">Avg Min Stay</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Override Details -->
+            <div class="response-section">
+                <div class="section-title">
+                    <div class="section-icon">💰</div>
+                    Updated Overrides
+                </div>
+                <div class="override-grid" id="overrideGrid">
+                    <!-- Override cards will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- JSON Response Viewer -->
+            <div class="response-section">
+                <div class="section-title">
+                    <div class="section-icon">📋</div>
+                    Raw Response Data
+                </div>
+                <div class="json-viewer">
+                    <div class="json-content" id="jsonContent">
+                        <!-- JSON will be populated by JavaScript -->
+                    </div>
+                    <button class="copy-btn" onclick="copyJsonToClipboard()">📋 Copy JSON</button>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="actions">
+                <button class="action-btn primary" onclick="updateAnotherDate()">
+                    📅 Update Another Date
+                </button>
+                <button class="action-btn secondary" onclick="viewAllOverrides()">
+                    📊 View All Overrides
+                </button>
+                <button class="action-btn secondary" onclick="backToListing()">
+                    🏠 Back to Listing
+                </button>
+                <button class="action-btn secondary" onclick="addMoreDates()">
+                    ➕ Add More Dates
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast notification -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Sample API response data
+        const apiResponse = {
+            "overrides": [
+                {
+                    "date": "2025-09-17",
+                    "price": "150",
+                    "price_type": "fixed",
+                    "currency": "USD",
+                    "min_stay": 2
+                }
+            ]
+        };
+
+        // Additional sample data for demonstration
+        const sampleResponses = [
+            {
+                "overrides": [
+                    {
+                        "date": "2025-09-17",
+                        "price": "150",
+                        "price_type": "fixed",
+                        "currency": "USD",
+                        "min_stay": 2
+                    }
+                ]
+            },
+            {
+                "overrides": [
+                    {
+                        "date": "2025-09-18",
+                        "price": "175",
+                        "price_type": "fixed",
+                        "currency": "USD",
+                        "min_stay": 1
+                    },
+                    {
+                        "date": "2025-09-19",
+                        "price": "200",
+                        "price_type": "fixed",
+                        "currency": "USD",
+                        "min_stay": 3
+                    }
+                ]
+            },
+            {
+                "overrides": []
+            }
+        ];
+
+        let currentResponseIndex = 0;
+        let currentResponse = apiResponse;
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            };
+            return date.toLocaleDateString('en-US', options);
+        }
+
+        function getRelativeTime(dateString) {
+            const date = new Date(dateString);
+            const now = new Date();
+            const diffTime = date - now;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays === 0) return 'Today';
+            if (diffDays === 1) return 'Tomorrow';
+            if (diffDays > 0) return `In ${diffDays} days`;
+            if (diffDays === -1) return 'Yesterday';
+            return `${Math.abs(diffDays)} days ago`;
+        }
+
+        function formatPrice(price, currency) {
+            const symbols = {
+                'USD': '$',
+                'EUR': '€',
+                'GBP': '£',
+                'JPY': '¥'
+            };
+            
+            const symbol = symbols[currency] || currency;
+            const numPrice = parseFloat(price);
+            
+            if (currency === 'JPY') {
+                return symbol + numPrice.toLocaleString();
+            }
+            
+            return symbol + numPrice.toLocaleString('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function renderOverrides(response) {
+            const grid = document.getElementById('overrideGrid');
+            
+            if (!response.overrides || response.overrides.length === 0) {
+                grid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📅</div>
+                        <h3>No Overrides Updated</h3>
+                        <p>No pricing overrides were updated in this operation.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = response.overrides.map((override, index) => `
+                <div class="override-card" style="animation-delay: ${index * 0.1}s">
+                    <div class="price-display">
+                        <span class="price-value">${formatPrice(override.price, override.currency)}</span>
+                        <span class="currency">${override.currency}</span>
+                        <span class="price-type-badge">${override.price_type}</span>
+                    </div>
+                    
+                    <div class="override-details">
+                        <div class="detail-item">
+                            <div class="detail-label">Effective Date</div>
+                            <div class="detail-value date-value">${formatDate(override.date)}</div>
+                            <div class="relative-time">${getRelativeTime(override.date)}</div>
+                        </div>
+                        
+                        <div class="detail-item">
+                            <div class="detail-label">Minimum Stay</div>
+                            <div class="detail-value min-stay-value">
+                                ${override.min_stay} night${override.min_stay !== 1 ? 's' : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateStats(response) {
+            const overrides = response.overrides || [];
+            const count = overrides.length;
+            
+            document.getElementById('overrideCount').textContent = count;
+            
+            if (count > 0) {
+                const totalValue = overrides.reduce((sum, override) => sum + parseFloat(override.price), 0);
+                const avgMinStay = overrides.reduce((sum, override) => sum + override.min_stay, 0) / count;
+                const currency = overrides[0].currency;
+                
+                document.getElementById('totalValue').textContent = formatPrice(totalValue.toString(), currency);
+                document.getElementById('avgMinStay').textContent = avgMinStay.toFixed(1);
+            } else {
+                document.getElementById('totalValue').textContent = '$0';
+                document.getElementById('avgMinStay').textContent = '0';
+            }
+        }
+
+        function syntaxHighlight(json) {
+            if (typeof json != "string") {
+                json = JSON.stringify(json, undefined, 2);
+            }
+            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                var cls = 'json-number';
+                if (/^"/.test(match)) {
+                    if (/:$/.test(match)) {
+                        cls = 'json-key';
+                    } else {
+                        cls = 'json-string';
+                    }
+                } else if (/true|false/.test(match)) {
+                    cls = 'json-boolean';
+                } else if (/null/.test(match)) {
+                    cls = 'json-null';
+                }
+                return '<span class="' + cls + '">' + match + '</span>';
+            });
+        }
+
+        function renderJson(response) {
+            const jsonContent = document.getElementById('jsonContent');
+            jsonContent.innerHTML = syntaxHighlight(response);
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function copyJsonToClipboard() {
+            const jsonText = JSON.stringify(currentResponse, null, 2);
+            navigator.clipboard.writeText(jsonText).then(() => {
+                showToast('JSON copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy JSON');
+            });
+        }
+
+        function updateAnotherDate() {
+            showToast('Redirecting to date picker...');
+            // In a real app, this would navigate to the override form
+        }
+
+        function viewAllOverrides() {
+            showToast('Loading override calendar...');
+            // In a real app, this would show the override calendar
+        }
+
+        function backToListing() {
+            showToast('Returning to listing...');
+            // In a real app, this would navigate back to the listing
+        }
+
+        function addMoreDates() {
+            showToast('Opening bulk date editor...');
+            // In a real app, this would open a bulk date selection interface
+        }
+
+        function loadSampleResponse(index) {
+            currentResponseIndex = index;
+            currentResponse = sampleResponses[index];
+            renderOverrides(currentResponse);
+            updateStats(currentResponse);
+            renderJson(currentResponse);
+        }
+
+        // Add keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' && currentResponseIndex > 0) {
+                loadSampleResponse(currentResponseIndex - 1);
+                showToast(`Sample ${currentResponseIndex + 1} of ${sampleResponses.length}`);
+            } else if (e.key === 'ArrowRight' && currentResponseIndex < sampleResponses.length - 1) {
+                loadSampleResponse(currentResponseIndex + 1);
+                showToast(`Sample ${currentResponseIndex + 1} of ${sampleResponses.length}`);
+            }
+        });
+
+        // Add sample navigation buttons
+        function addSampleNavigation() {
+            const actions = document.querySelector('.actions');
+            const navDiv = document.createElement('div');
+            navDiv.style.cssText = 'margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;';
+            navDiv.innerHTML = `
+                <div style="display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap;">
+                    <span style="font-size: 14px; color: #6b7280; margin-right: 8px;">Sample Data:</span>
+                    <button class="action-btn secondary" onclick="loadSampleResponse(0)" style="padding: 8px 16px; font-size: 12px;">
+                        Single Override
+                    </button>
+                    <button class="action-btn secondary" onclick="loadSampleResponse(1)" style="padding: 8px 16px; font-size: 12px;">
+                        Multiple Overrides
+                    </button>
+                    <button class="action-btn secondary" onclick="loadSampleResponse(2)" style="padding: 8px 16px; font-size: 12px;">
+                        Empty Response
+                    </button>
+                    <span style="font-size: 12px; color: #6b7280; margin-left: 8px;">Use ← → keys to navigate</span>
+                </div>
+            `;
+            actions.appendChild(navDiv);
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            renderOverrides(currentResponse);
+            updateStats(currentResponse);
+            renderJson(currentResponse);
+            addSampleNavigation();
+            
+            // Show initial toast
+            setTimeout(() => {
+                showToast('Override update visualization loaded successfully!');
+            }, 500);
+        });
+
+        // Add smooth scrolling for better UX
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Add hover effects for better interactivity
+        document.addEventListener('mouseover', (e) => {
+            if (e.target.classList.contains('override-card')) {
+                e.target.style.transform = 'translateY(-4px) scale(1.02)';
+            }
+        });
+
+        document.addEventListener('mouseout', (e) => {
+            if (e.target.classList.contains('override-card')) {
+                e.target.style.transform = 'translateY(0) scale(1)';
+            }
+        });
+    </script>
+</body>
+</html>

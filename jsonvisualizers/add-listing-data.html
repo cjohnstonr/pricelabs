@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Listing Data API Response Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            font-size: 16px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .status-section {
+            margin-bottom: 30px;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .status-success {
+            background-color: #10B981;
+            color: white;
+        }
+
+        .status-error {
+            background-color: #EF4444;
+            color: white;
+        }
+
+        .status-message {
+            font-size: 18px;
+            font-weight: 500;
+            color: #374151;
+            margin-bottom: 10px;
+        }
+
+        .timestamp {
+            font-size: 14px;
+            color: #6B7280;
+        }
+
+        .metrics-dashboard {
+            background: #F9FAFB;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+
+        .metrics-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+        }
+
+        .metrics-title::before {
+            content: "📊";
+            margin-right: 10px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .metric-number {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #6B7280;
+        }
+
+        .metric-total {
+            color: #3B82F6;
+        }
+
+        .metric-success {
+            color: #10B981;
+        }
+
+        .metric-warning {
+            color: #F59E0B;
+        }
+
+        .listings-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .listing-card {
+            background: white;
+            border-radius: 12px;
+            border: 2px solid #E5E7EB;
+            overflow: hidden;
+            transition: border-color 0.2s ease;
+        }
+
+        .listing-card:hover {
+            border-color: #3B82F6;
+        }
+
+        .listing-header {
+            padding: 20px;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .listing-header-success {
+            background-color: #ECFDF5;
+            color: #065F46;
+        }
+
+        .listing-header-warning {
+            background-color: #FFFBEB;
+            color: #92400E;
+        }
+
+        .listing-count {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 20px;
+            padding: 4px 12px;
+            font-size: 14px;
+        }
+
+        .listing-content {
+            padding: 20px;
+        }
+
+        .listing-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 16px;
+            margin-bottom: 8px;
+            background: #F9FAFB;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+
+        .listing-item:hover {
+            background: #F3F4F6;
+        }
+
+        .listing-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .listing-icon {
+            margin-right: 8px;
+        }
+
+        .copy-btn {
+            background: #3B82F6;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: #2563EB;
+        }
+
+        .copy-btn:active {
+            transform: scale(0.95);
+        }
+
+        .action-buttons {
+            padding: 20px;
+            border-top: 1px solid #E5E7EB;
+        }
+
+        .btn {
+            background: #3B82F6;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            background: #2563EB;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #6B7280;
+        }
+
+        .btn-secondary:hover {
+            background: #4B5563;
+        }
+
+        .error-section {
+            background: #FEF2F2;
+            border: 1px solid #FECACA;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+        }
+
+        .error-title {
+            color: #DC2626;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        }
+
+        .error-title::before {
+            content: "❌";
+            margin-right: 10px;
+        }
+
+        .error-message {
+            color: #7F1D1D;
+            font-size: 16px;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #EF4444;
+        }
+
+        .troubleshooting {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .troubleshooting h3 {
+            color: #374151;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .troubleshooting h3::before {
+            content: "🔧";
+            margin-right: 8px;
+        }
+
+        .troubleshooting ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .troubleshooting li {
+            color: #4B5563;
+            margin-bottom: 8px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .troubleshooting li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #EF4444;
+            font-weight: bold;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #6B7280;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        .json-viewer {
+            background: #1F2937;
+            color: #F9FAFB;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+
+        .json-viewer pre {
+            margin: 0;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #E5E7EB;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 12px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10B981, #34D399);
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        .success-rate {
+            font-size: 14px;
+            color: #6B7280;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 12px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .listings-section {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+                margin-right: 0;
+            }
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+        }
+
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #374151;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            font-size: 12px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #10B981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Add Listing Data API Response</h1>
+            <div class="subtitle">POST /v1/add_listing_data - BookingSync Integration</div>
+        </div>
+
+        <div class="content">
+            <div id="statusSection" class="status-section">
+                <!-- Status will be rendered here -->
+            </div>
+
+            <div id="metricsSection" class="metrics-dashboard" style="display: none;">
+                <!-- Metrics will be rendered here -->
+            </div>
+
+            <div id="listingsSection" class="listings-section" style="display: none;">
+                <!-- Listings will be rendered here -->
+            </div>
+
+            <div id="errorSection" class="error-section" style="display: none;">
+                <!-- Error details will be rendered here -->
+            </div>
+
+            <div class="json-viewer">
+                <h3 style="color: #F9FAFB; margin-bottom: 12px;">Raw API Response:</h3>
+                <pre id="jsonDisplay"></pre>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification">
+        Copied to clipboard!
+    </div>
+
+    <script>
+        // Sample data - both success and error examples
+        const sampleResponses = {
+            success: {
+                "success": "Successfully connected with BookingSync",
+                "lat_lng_listings": ["listing_id_1", "listing_id_2"],
+                "listing_ids": ["listing_id_3", "listing_id_4", "listing_id_5"]
+            },
+            error: {
+                "error": "Missing listing id and/or pms name"
+            }
+        };
+
+        // Current response (starts with error example from the file)
+        let currentResponse = {
+            "error": "Missing listing id and/or pms name"
+        };
+
+        // Utility functions
+        function showNotification(message = 'Copied to clipboard!') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 2000);
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showNotification();
+            }).catch(err => {
+                console.error('Failed to copy text: ', err);
+                showNotification('Failed to copy');
+            });
+        }
+
+        function calculateSuccessRate(successCount, totalCount) {
+            if (totalCount === 0) return 0;
+            return Math.round((successCount / totalCount) * 100);
+        }
+
+        function formatTimestamp() {
+            return new Date().toLocaleString();
+        }
+
+        // Rendering functions
+        function renderStatus(response) {
+            const statusSection = document.getElementById('statusSection');
+            
+            if (response.error) {
+                statusSection.innerHTML = `
+                    <div class="status-badge status-error">
+                        ERROR
+                    </div>
+                    <div class="status-message">Import Failed</div>
+                    <div class="timestamp">Last attempt: ${formatTimestamp()}</div>
+                `;
+            } else {
+                statusSection.innerHTML = `
+                    <div class="status-badge status-success">
+                        SUCCESS
+                    </div>
+                    <div class="status-message">${response.success}</div>
+                    <div class="timestamp">Completed: ${formatTimestamp()}</div>
+                `;
+            }
+        }
+
+        function renderMetrics(response) {
+            if (response.error) {
+                document.getElementById('metricsSection').style.display = 'none';
+                return;
+            }
+
+            const metricsSection = document.getElementById('metricsSection');
+            const successCount = response.listing_ids ? response.listing_ids.length : 0;
+            const warningCount = response.lat_lng_listings ? response.lat_lng_listings.length : 0;
+            const totalCount = successCount + warningCount;
+            const successRate = calculateSuccessRate(successCount, totalCount);
+
+            metricsSection.innerHTML = `
+                <div class="metrics-title">IMPORT SUMMARY</div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-number metric-total">${totalCount}</div>
+                        <div class="metric-label">Total Processed</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-number metric-success">${successCount}</div>
+                        <div class="metric-label">Successfully Added</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-number metric-warning">${warningCount}</div>
+                        <div class="metric-label">Need Lat/Lng</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-number metric-success">${successRate}%</div>
+                        <div class="metric-label">Success Rate</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: ${successRate}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            metricsSection.style.display = 'block';
+        }
+
+        function renderListingCard(title, listings, type, icon) {
+            if (!listings || listings.length === 0) {
+                return `
+                    <div class="listing-card">
+                        <div class="listing-header listing-header-${type}">
+                            ${icon} ${title}
+                            <span class="listing-count">0</span>
+                        </div>
+                        <div class="listing-content">
+                            <div class="empty-state">No listings in this category</div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            const listingItems = listings.map(listingId => `
+                <div class="listing-item">
+                    <span>
+                        <span class="listing-icon">${type === 'success' ? '🏠' : '📍'}</span>
+                        ${listingId}
+                    </span>
+                    <button class="copy-btn" onclick="copyToClipboard('${listingId}')">Copy</button>
+                </div>
+            `).join('');
+
+            const actionButtonText = type === 'success' ? 'View in PriceLabs Dashboard' : 'Update in BookingSync';
+            const actionButtonClass = type === 'success' ? 'btn' : 'btn btn-secondary';
+
+            return `
+                <div class="listing-card">
+                    <div class="listing-header listing-header-${type}">
+                        ${icon} ${title}
+                        <span class="listing-count">${listings.length}</span>
+                    </div>
+                    <div class="listing-content">
+                        ${listingItems}
+                    </div>
+                    <div class="action-buttons">
+                        <button class="${actionButtonClass}" onclick="handleAction('${type}', ${JSON.stringify(listings).replace(/"/g, '&quot;')})">
+                            ${actionButtonText}
+                        </button>
+                        <button class="btn btn-secondary" onclick="copyToClipboard('${listings.join(', ')}')">
+                            Copy All IDs
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderListings(response) {
+            if (response.error) {
+                document.getElementById('listingsSection').style.display = 'none';
+                return;
+            }
+
+            const listingsSection = document.getElementById('listingsSection');
+            const successCard = renderListingCard(
+                'SUCCESSFULLY ADDED',
+                response.listing_ids,
+                'success',
+                '✅'
+            );
+            const warningCard = renderListingCard(
+                'NEEDS LAT/LNG UPDATE',
+                response.lat_lng_listings,
+                'warning',
+                '⚠️'
+            );
+
+            listingsSection.innerHTML = successCard + warningCard;
+            listingsSection.style.display = 'grid';
+        }
+
+        function renderError(response) {
+            if (!response.error) {
+                document.getElementById('errorSection').style.display = 'none';
+                return;
+            }
+
+            const errorSection = document.getElementById('errorSection');
+            errorSection.innerHTML = `
+                <div class="error-title">IMPORT FAILED</div>
+                <div class="error-message">${response.error}</div>
+                <div class="troubleshooting">
+                    <h3>Troubleshooting Steps:</h3>
+                    <ul>
+                        <li>Verify listing ID is correct and exists in BookingSync</li>
+                        <li>Ensure PMS name is valid (must be "BookingSync")</li>
+                        <li>Check API key permissions and validity</li>
+                        <li>Confirm the listing is active and not archived</li>
+                        <li>Verify network connectivity to BookingSync API</li>
+                    </ul>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn" onclick="retryImport()">Retry Import</button>
+                    <button class="btn btn-secondary" onclick="contactSupport()">Contact Support</button>
+                    <button class="btn btn-secondary" onclick="showSuccessExample()">View Success Example</button>
+                </div>
+            `;
+            errorSection.style.display = 'block';
+        }
+
+        function renderJsonDisplay(response) {
+            const jsonDisplay = document.getElementById('jsonDisplay');
+            jsonDisplay.textContent = JSON.stringify(response, null, 2);
+        }
+
+        // Main render function
+        function renderResponse(response) {
+            renderStatus(response);
+            renderMetrics(response);
+            renderListings(response);
+            renderError(response);
+            renderJsonDisplay(response);
+        }
+
+        // Action handlers
+        function handleAction(type, listings) {
+            if (type === 'success') {
+                showNotification('Opening PriceLabs Dashboard...');
+                // In a real implementation, this would open the dashboard
+                console.log('Navigate to PriceLabs dashboard for listings:', listings);
+            } else {
+                showNotification('Opening BookingSync for updates...');
+                // In a real implementation, this would open BookingSync
+                console.log('Navigate to BookingSync for lat/lng updates:', listings);
+            }
+        }
+
+        function retryImport() {
+            showNotification('Retrying import...');
+            // In a real implementation, this would trigger a new API call
+            setTimeout(() => {
+                showNotification('Retry functionality would trigger new API call');
+            }, 1000);
+        }
+
+        function contactSupport() {
+            showNotification('Opening support portal...');
+            // In a real implementation, this would open support
+            console.log('Contact support with error details');
+        }
+
+        function showSuccessExample() {
+            currentResponse = sampleResponses.success;
+            renderResponse(currentResponse);
+            showNotification('Showing success example');
+        }
+
+        function showErrorExample() {
+            currentResponse = sampleResponses.error;
+            renderResponse(currentResponse);
+            showNotification('Showing error example');
+        }
+
+        // Add demo buttons for testing
+        function addDemoControls() {
+            const content = document.querySelector('.content');
+            const demoSection = document.createElement('div');
+            demoSection.style.cssText = 'margin-top: 20px; padding: 20px; background: #F3F4F6; border-radius: 8px; text-align: center;';
+            demoSection.innerHTML = `
+                <h3 style="margin-bottom: 15px; color: #374151;">Demo Controls</h3>
+                <button class="btn" onclick="showSuccessExample()" style="margin-right: 10px;">Show Success Response</button>
+                <button class="btn btn-secondary" onclick="showErrorExample()">Show Error Response</button>
+            `;
+            content.appendChild(demoSection);
+        }
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            renderResponse(currentResponse);
+            addDemoControls();
+        });
+
+        // Keyboard navigation support
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                // Close any open modals or notifications
+                document.getElementById('notification').classList.remove('show');
+            }
+        });
+    </script>
+</body>
+</html>

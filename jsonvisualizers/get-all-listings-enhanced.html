@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PriceLabs Listings Dashboard - Enhanced with Market Data</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            opacity: 0.9;
+            font-size: 14px;
+        }
+
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .summary-card {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .summary-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .summary-card .label {
+            font-size: 13px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .filter-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .table-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: #333;
+            border-bottom: 2px solid #dee2e6;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background: #e9ecef;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background: #f8f9fa;
+        }
+
+        .property-name {
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pms-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .pms-airbnb {
+            background: #FF5A5F;
+            color: white;
+        }
+
+        .pms-vrbo {
+            background: #0B5394;
+            color: white;
+        }
+
+        .pms-guesty {
+            background: #00A699;
+            color: white;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .push-enabled {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .push-disabled {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        .occupancy-bar {
+            width: 100px;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .occupancy-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #28a745 0%, #20c997 100%);
+            transition: width 0.3s;
+        }
+
+        .occupancy-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 11px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .market-comparison {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .market-indicator {
+            width: 0;
+            height: 0;
+            border-style: solid;
+        }
+
+        .market-up {
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 8px solid #28a745;
+        }
+
+        .market-down {
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 8px solid #dc3545;
+        }
+
+        .market-neutral {
+            width: 8px;
+            height: 8px;
+            background: #ffc107;
+            border-radius: 50%;
+        }
+
+        .market-value {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .market-delta {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .delta-positive {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .delta-negative {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .delta-neutral {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .sort-arrow {
+            display: inline-block;
+            margin-left: 5px;
+            opacity: 0.5;
+        }
+
+        .sort-arrow.active {
+            opacity: 1;
+        }
+
+        @media (max-width: 768px) {
+            .summary-cards {
+                grid-template-columns: 1fr;
+            }
+            
+            .table-container {
+                padding: 15px;
+            }
+            
+            th, td {
+                padding: 8px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>PriceLabs Listings Dashboard</h1>
+            <div class="subtitle">Enhanced with Market Occupancy Data • Real-time Performance Tracking</div>
+        </div>
+
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="value" id="totalListings">-</div>
+                <div class="label">Total Listings</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" id="avgOccupancy">-</div>
+                <div class="label">Avg Occupancy (7d)</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" id="avgMarketOcc">-</div>
+                <div class="label">Avg Market Occ</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" id="syncEnabled">-</div>
+                <div class="label">Sync Enabled</div>
+            </div>
+            <div class="summary-card">
+                <div class="value" id="avgBasePrice">-</div>
+                <div class="label">Avg Base Price</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Search by property name or ID...">
+            </div>
+            <div class="filter-group">
+                <button class="filter-btn active" data-filter="all">All</button>
+                <button class="filter-btn" data-filter="sync">Sync On</button>
+                <button class="filter-btn" data-filter="nosync">Sync Off</button>
+                <button class="filter-btn" data-filter="airbnb">Airbnb</button>
+                <button class="filter-btn" data-filter="vrbo">VRBO</button>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table id="listingsTable">
+                <thead>
+                    <tr>
+                        <th data-sort="name">Property <span class="sort-arrow">↕</span></th>
+                        <th data-sort="bedrooms">BR <span class="sort-arrow">↕</span></th>
+                        <th data-sort="base">Base Price <span class="sort-arrow">↕</span></th>
+                        <th data-sort="occupancy">Occupancy (7d) <span class="sort-arrow">↕</span></th>
+                        <th data-sort="market_occ">Market Occ% <span class="sort-arrow">↕</span></th>
+                        <th data-sort="market_ly">Market LY <span class="sort-arrow">↕</span></th>
+                        <th data-sort="market_stly">Market STLY <span class="sort-arrow">↕</span></th>
+                        <th data-sort="occ_delta">Occ vs Market <span class="sort-arrow">↕</span></th>
+                        <th data-sort="revenue">Revenue (30d) <span class="sort-arrow">↕</span></th>
+                        <th data-sort="mpi">MPI <span class="sort-arrow">↕</span></th>
+                        <th data-sort="status">Status <span class="sort-arrow">↕</span></th>
+                    </tr>
+                </thead>
+                <tbody id="listingsBody">
+                    <!-- Table rows will be inserted here -->
+                </tbody>
+            </table>
+            <div class="no-data" style="display: none;">No listings found matching your criteria</div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data with market occupancy (this would come from API calls)
+        const listingsData = {
+            "listings": [
+                {
+                    "id": "634197676956646902",
+                    "pms": "airbnb",
+                    "name": "Mountaintop Estate: Pool-Hot Tub-Theatre",
+                    "no_of_bedrooms": 5,
+                    "base": 891,
+                    "min": 400,
+                    "max": 1750,
+                    "occupancy_next_7": "100 %",
+                    "market_occupancy_next_7": "46 %",
+                    "revenue_past_30": 3440,
+                    "stly_revenue_past_30": 10491,
+                    "mpi_next_30": 2.6,
+                    "push_enabled": false,
+                    "isHidden": true,
+                    // Simulated market data (would come from neighborhood API)
+                    "market_occ_current": 46,
+                    "market_occ_ly": 42,
+                    "market_occ_stly": 44
+                },
+                {
+                    "id": "750684369623859183",
+                    "pms": "airbnb",
+                    "name": "Charming 1b/1b with Full Kitchen",
+                    "no_of_bedrooms": 1,
+                    "base": 139,
+                    "min": 109,
+                    "max": 217,
+                    "occupancy_next_7": "43 %",
+                    "market_occupancy_next_7": "51 %",
+                    "revenue_past_30": 920,
+                    "stly_revenue_past_30": 2599,
+                    "mpi_next_30": 0.5,
+                    "push_enabled": false,
+                    "isHidden": true,
+                    "market_occ_current": 51,
+                    "market_occ_ly": 48,
+                    "market_occ_stly": 49
+                },
+                {
+                    "id": "4305303",
+                    "pms": "airbnb",
+                    "name": "Chic 1BR in Trendy Walkable South Park",
+                    "no_of_bedrooms": 1,
+                    "base": 185,
+                    "min": 150,
+                    "max": 280,
+                    "occupancy_next_7": "86 %",
+                    "market_occupancy_next_7": "51 %",
+                    "revenue_past_30": 4200,
+                    "stly_revenue_past_30": 3800,
+                    "mpi_next_30": 1.8,
+                    "push_enabled": true,
+                    "isHidden": false,
+                    "market_occ_current": 51,
+                    "market_occ_ly": 48,
+                    "market_occ_stly": 49
+                },
+                {
+                    "id": "42477590",
+                    "pms": "airbnb", 
+                    "name": "Yosemite Gate Escape",
+                    "no_of_bedrooms": 2,
+                    "base": 325,
+                    "min": 250,
+                    "max": 450,
+                    "occupancy_next_7": "71 %",
+                    "market_occupancy_next_7": "62 %",
+                    "revenue_past_30": 6800,
+                    "stly_revenue_past_30": 5200,
+                    "mpi_next_30": 1.3,
+                    "push_enabled": true,
+                    "isHidden": false,
+                    "market_occ_current": 62,
+                    "market_occ_ly": 58,
+                    "market_occ_stly": 60
+                }
+            ]
+        };
+
+        let currentSort = { column: 'name', direction: 'asc' };
+        let currentFilter = 'all';
+        let searchTerm = '';
+
+        function parseOccupancy(occStr) {
+            if (!occStr) return 0;
+            return parseFloat(occStr.toString().replace(' %', '').replace('%', '')) || 0;
+        }
+
+        function formatCurrency(value) {
+            if (!value || value === 'Unavailable') return '—';
+            return new Intl.NumberFormat('en-US', { 
+                style: 'currency', 
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        function formatPercent(value) {
+            if (value === null || value === undefined) return '—';
+            return `${value}%`;
+        }
+
+        function getOccupancyDelta(propOcc, marketOcc) {
+            const prop = parseOccupancy(propOcc);
+            const market = parseOccupancy(marketOcc);
+            return prop - market;
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('listingsBody');
+            const noData = document.querySelector('.no-data');
+            
+            // Filter data
+            let filteredData = listingsData.listings.filter(listing => {
+                // Search filter
+                if (searchTerm) {
+                    const term = searchTerm.toLowerCase();
+                    const matchName = listing.name.toLowerCase().includes(term);
+                    const matchId = listing.id.toLowerCase().includes(term);
+                    if (!matchName && !matchId) return false;
+                }
+                
+                // Status filter
+                if (currentFilter === 'sync' && !listing.push_enabled) return false;
+                if (currentFilter === 'nosync' && listing.push_enabled) return false;
+                if (currentFilter === 'airbnb' && listing.pms !== 'airbnb') return false;
+                if (currentFilter === 'vrbo' && listing.pms !== 'vrbo') return false;
+                
+                return true;
+            });
+
+            // Sort data
+            filteredData.sort((a, b) => {
+                let aVal, bVal;
+                
+                switch (currentSort.column) {
+                    case 'name':
+                        aVal = a.name.toLowerCase();
+                        bVal = b.name.toLowerCase();
+                        break;
+                    case 'bedrooms':
+                        aVal = a.no_of_bedrooms;
+                        bVal = b.no_of_bedrooms;
+                        break;
+                    case 'base':
+                        aVal = a.base;
+                        bVal = b.base;
+                        break;
+                    case 'occupancy':
+                        aVal = parseOccupancy(a.occupancy_next_7);
+                        bVal = parseOccupancy(b.occupancy_next_7);
+                        break;
+                    case 'market_occ':
+                        aVal = a.market_occ_current || 0;
+                        bVal = b.market_occ_current || 0;
+                        break;
+                    case 'market_ly':
+                        aVal = a.market_occ_ly || 0;
+                        bVal = b.market_occ_ly || 0;
+                        break;
+                    case 'market_stly':
+                        aVal = a.market_occ_stly || 0;
+                        bVal = b.market_occ_stly || 0;
+                        break;
+                    case 'occ_delta':
+                        aVal = getOccupancyDelta(a.occupancy_next_7, a.market_occ_current);
+                        bVal = getOccupancyDelta(b.occupancy_next_7, b.market_occ_current);
+                        break;
+                    case 'revenue':
+                        aVal = a.revenue_past_30 || 0;
+                        bVal = b.revenue_past_30 || 0;
+                        break;
+                    case 'mpi':
+                        aVal = a.mpi_next_30 || 0;
+                        bVal = b.mpi_next_30 || 0;
+                        break;
+                    case 'status':
+                        aVal = a.push_enabled ? 1 : 0;
+                        bVal = b.push_enabled ? 1 : 0;
+                        break;
+                    default:
+                        aVal = a.name;
+                        bVal = b.name;
+                }
+                
+                if (currentSort.direction === 'asc') {
+                    return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+                } else {
+                    return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+                }
+            });
+
+            // Render rows
+            tbody.innerHTML = '';
+            
+            if (filteredData.length === 0) {
+                noData.style.display = 'block';
+                return;
+            } else {
+                noData.style.display = 'none';
+            }
+
+            filteredData.forEach(listing => {
+                const propOcc = parseOccupancy(listing.occupancy_next_7);
+                const marketOcc = listing.market_occ_current || parseOccupancy(listing.market_occupancy_next_7);
+                const occDelta = propOcc - marketOcc;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div class="property-name">
+                            <span class="pms-badge pms-${listing.pms}">${listing.pms}</span>
+                            <span>${listing.name}</span>
+                        </div>
+                    </td>
+                    <td>${listing.no_of_bedrooms}</td>
+                    <td>${formatCurrency(listing.base)}</td>
+                    <td>
+                        <div class="occupancy-bar">
+                            <div class="occupancy-fill" style="width: ${propOcc}%"></div>
+                            <span class="occupancy-text">${propOcc}%</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="market-comparison">
+                            <span class="market-value">${formatPercent(marketOcc)}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="market-comparison">
+                            <span class="market-value">${formatPercent(listing.market_occ_ly)}</span>
+                            ${listing.market_occ_ly && marketOcc ? (
+                                marketOcc > listing.market_occ_ly ? 
+                                '<span class="market-indicator market-up"></span>' :
+                                marketOcc < listing.market_occ_ly ? 
+                                '<span class="market-indicator market-down"></span>' :
+                                '<span class="market-indicator market-neutral"></span>'
+                            ) : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <div class="market-comparison">
+                            <span class="market-value">${formatPercent(listing.market_occ_stly)}</span>
+                            ${listing.market_occ_stly && marketOcc ? (
+                                marketOcc > listing.market_occ_stly ? 
+                                '<span class="market-indicator market-up"></span>' :
+                                marketOcc < listing.market_occ_stly ? 
+                                '<span class="market-indicator market-down"></span>' :
+                                '<span class="market-indicator market-neutral"></span>'
+                            ) : ''}
+                        </div>
+                    </td>
+                    <td>
+                        <span class="market-delta ${occDelta > 0 ? 'delta-positive' : occDelta < 0 ? 'delta-negative' : 'delta-neutral'}">
+                            ${occDelta > 0 ? '+' : ''}${occDelta.toFixed(0)}%
+                        </span>
+                    </td>
+                    <td>${formatCurrency(listing.revenue_past_30)}</td>
+                    <td>
+                        <span style="color: ${listing.mpi_next_30 >= 2 ? '#28a745' : listing.mpi_next_30 >= 1 ? '#ffc107' : '#dc3545'}; font-weight: 600;">
+                            ${listing.mpi_next_30 ? listing.mpi_next_30.toFixed(1) : '—'}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="status-badge ${listing.push_enabled ? 'push-enabled' : 'push-disabled'}">
+                            ${listing.push_enabled ? 'Sync On' : 'Sync Off'}
+                        </span>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            updateSummaryCards(filteredData);
+        }
+
+        function updateSummaryCards(data) {
+            // Total listings
+            document.getElementById('totalListings').textContent = data.length;
+            
+            // Average occupancy
+            const avgOcc = data.reduce((sum, l) => sum + parseOccupancy(l.occupancy_next_7), 0) / data.length;
+            document.getElementById('avgOccupancy').textContent = avgOcc.toFixed(0) + '%';
+            
+            // Average market occupancy
+            const avgMarket = data.reduce((sum, l) => sum + (l.market_occ_current || parseOccupancy(l.market_occupancy_next_7)), 0) / data.length;
+            document.getElementById('avgMarketOcc').textContent = avgMarket.toFixed(0) + '%';
+            
+            // Sync enabled count
+            const syncCount = data.filter(l => l.push_enabled).length;
+            document.getElementById('syncEnabled').textContent = syncCount;
+            
+            // Average base price
+            const avgPrice = data.reduce((sum, l) => sum + (l.base || 0), 0) / data.length;
+            document.getElementById('avgBasePrice').textContent = formatCurrency(avgPrice);
+        }
+
+        // Event listeners
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            searchTerm = e.target.value;
+            renderTable();
+        });
+
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentFilter = btn.dataset.filter;
+                renderTable();
+            });
+        });
+
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => {
+                const column = th.dataset.sort;
+                if (currentSort.column === column) {
+                    currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                } else {
+                    currentSort.column = column;
+                    currentSort.direction = 'asc';
+                }
+                
+                // Update sort arrows
+                document.querySelectorAll('.sort-arrow').forEach(arrow => {
+                    arrow.classList.remove('active');
+                    arrow.textContent = '↕';
+                });
+                
+                const arrow = th.querySelector('.sort-arrow');
+                arrow.classList.add('active');
+                arrow.textContent = currentSort.direction === 'asc' ? '↑' : '↓';
+                
+                renderTable();
+            });
+        });
+
+        // Simulate fetching market data (in production, this would be API calls)
+        async function fetchMarketData(listingId, bedrooms, pms) {
+            // This would actually call the neighborhood API
+            // For now, returning simulated data
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve({
+                        market_occ_current: 45 + Math.random() * 30,
+                        market_occ_ly: 40 + Math.random() * 30,
+                        market_occ_stly: 42 + Math.random() * 30
+                    });
+                }, 100);
+            });
+        }
+
+        // Initial render
+        renderTable();
+
+        // Note: In production, you would fetch real market data for each listing
+        // This would involve calling the neighborhood API for each property
+        // and matching the bedroom category to get the correct market occupancy
+    </script>
+</body>
+</html>

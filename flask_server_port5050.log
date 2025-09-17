@@ -1,0 +1,165 @@
+Refreshing all portfolio listings...
+
+Fetching listings from Utah Portfolio...
+  Found 7 listings
+
+Fetching listings from California Portfolio...
+  Found 10 listings
+
+Fetching listings from Main Portfolio...
+  Found 79 listings
+
+Fetching listings from Special Account...
+  Found 2 listings
+
+============================================================
+PORTFOLIO SUMMARY
+============================================================
+Utah Portfolio                7 listings
+California Portfolio         10 listings
+Main Portfolio               79 listings
+Special Account               2 listings
+------------------------------------------------------------
+TOTAL                        98 listings
+Starting PriceLabs Listing Viewer...
+Open http://localhost:5050 in your browser
+Or use http://localhost:5050?listing_id=YOUR_LISTING_ID
+
+Press Ctrl+C to stop the server
+ * Serving Flask app 'listing_viewer_app'
+ * Debug mode: on
+[31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5050
+[33mPress CTRL+C to quit[0m
+ * Restarting with stat
+ * Debugger is active!
+ * Debugger PIN: 102-970-701
+127.0.0.1 - - [16/Sep/2025 15:51:49] "GET /api/listing/1334983371248969952 HTTP/1.1" 200 -
+127.0.0.1 - - [16/Sep/2025 15:52:05] "GET /api/refresh HTTP/1.1" 200 -
+127.0.0.1 - - [16/Sep/2025 15:53:22] "[33mGET /api/listing/{listing_id} HTTP/1.1[0m" 404 -
+127.0.0.1 - - [16/Sep/2025 15:53:22] "[33mGET /favicon.ico HTTP/1.1[0m" 404 -
+127.0.0.1 - - [16/Sep/2025 15:53:27] "GET /api/refresh HTTP/1.1" 200 -
+127.0.0.1 - - [16/Sep/2025 15:53:29] "GET /api/listing/634197676956646902 HTTP/1.1" 200 -
+127.0.0.1 - - [16/Sep/2025 15:54:02] "GET /api/refresh HTTP/1.1" 200 -
+Refreshing all portfolio listings...
+
+Fetching listings from Utah Portfolio...
+  Found 7 listings
+
+Fetching listings from California Portfolio...
+  Found 10 listings
+
+Fetching listings from Main Portfolio...
+  Found 79 listings
+
+Fetching listings from Special Account...
+  Found 2 listings
+
+============================================================
+PORTFOLIO SUMMARY
+============================================================
+Utah Portfolio                7 listings
+California Portfolio         10 listings
+Main Portfolio               79 listings
+Special Account               2 listings
+------------------------------------------------------------
+TOTAL                        98 listings
+Starting PriceLabs Listing Viewer...
+Open http://localhost:5050 in your browser
+Or use http://localhost:5050?listing_id=YOUR_LISTING_ID
+
+Press Ctrl+C to stop the server
+Refreshing all portfolio listings...
+
+Fetching listings from Utah Portfolio...
+  Found 7 listings
+
+Fetching listings from California Portfolio...
+  Found 10 listings
+
+Fetching listings from Main Portfolio...
+  Found 79 listings
+
+Fetching listings from Special Account...
+  Found 2 listings
+
+============================================================
+PORTFOLIO SUMMARY
+============================================================
+Utah Portfolio                7 listings
+California Portfolio         10 listings
+Main Portfolio               79 listings
+Special Account               2 listings
+------------------------------------------------------------
+TOTAL                        98 listings
+Refreshing all portfolio listings...
+
+Fetching listings from Utah Portfolio...
+  Found 7 listings
+
+Fetching listings from California Portfolio...
+  Found 10 listings
+
+Fetching listings from Main Portfolio...
+  Found 79 listings
+
+Fetching listings from Special Account...
+  Found 2 listings
+
+============================================================
+PORTFOLIO SUMMARY
+============================================================
+Utah Portfolio                7 listings
+California Portfolio         10 listings
+Main Portfolio               79 listings
+Special Account               2 listings
+------------------------------------------------------------
+TOTAL                        98 listings
+Refreshing all portfolio listings...
+
+Fetching listings from Utah Portfolio...
+  Found 7 listings
+
+Fetching listings from California Portfolio...
+  Found 10 listings
+
+Fetching listings from Main Portfolio...
+  Found 79 listings
+
+Fetching listings from Special Account...
+  Found 2 listings
+
+============================================================
+PORTFOLIO SUMMARY
+============================================================
+Utah Portfolio                7 listings
+California Portfolio         10 listings
+Main Portfolio               79 listings
+Special Account               2 listings
+------------------------------------------------------------
+TOTAL                        98 listings
+Refreshing all portfolio listings...
+
+Fetching listings from Utah Portfolio...
+  Found 7 listings
+
+Fetching listings from California Portfolio...
+  Found 10 listings
+
+Fetching listings from Main Portfolio...
+  Found 79 listings
+
+Fetching listings from Special Account...
+  Found 2 listings
+
+============================================================
+PORTFOLIO SUMMARY
+============================================================
+Utah Portfolio                7 listings
+California Portfolio         10 listings
+Main Portfolio               79 listings
+Special Account               2 listings
+------------------------------------------------------------
+TOTAL                        98 listings
+/Users/AIRBNB/miniconda3/lib/python3.11/multiprocessing/resource_tracker.py:224: UserWarning: resource_tracker: There appear to be 1 leaked semaphore objects to clean up at shutdown
+  warnings.warn('resource_tracker: There appear to be %d '

@@ -1,0 +1,1232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Listing Overrides Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .listing-info {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .info-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .info-card h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .info-card p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .controls h2 {
+            margin-bottom: 20px;
+            color: #4a5568;
+            font-size: 1.3rem;
+        }
+
+        .control-row {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn.active {
+            background: linear-gradient(135deg, #48bb78, #38a169);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .input-group input, .input-group select {
+            padding: 10px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .calendar-container {
+            display: none;
+        }
+
+        .calendar-container.active {
+            display: block;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f7fafc, #edf2f7);
+            border-radius: 15px;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            background: #5a67d8;
+            transform: scale(1.1);
+        }
+
+        .month-year {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0 20px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .calendar-header-cell {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 10px;
+            text-align: center;
+            font-weight: 600;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .calendar-cell {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 10px;
+            min-height: 120px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .calendar-cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .calendar-cell.other-month {
+            opacity: 0.3;
+        }
+
+        .calendar-cell.has-override {
+            border-color: #2563eb;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+        }
+
+        .calendar-cell.percentage-override {
+            border-color: #ea580c;
+            background: linear-gradient(135deg, #fff7ed, #fed7aa);
+        }
+
+        .date-number {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .override-info {
+            font-size: 0.8rem;
+            line-height: 1.3;
+        }
+
+        .price-info {
+            font-weight: 600;
+            color: #2563eb;
+            margin-bottom: 3px;
+        }
+
+        .percentage-override .price-info {
+            color: #ea580c;
+        }
+
+        .min-stay {
+            color: #059669;
+            margin-bottom: 3px;
+        }
+
+        .checkin-checkout {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .checkin-checkout span {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        .checkin {
+            background: #22c55e;
+            color: white;
+        }
+
+        .checkout {
+            background: #ef4444;
+            color: white;
+        }
+
+        .table-container {
+            display: none;
+            overflow-x: auto;
+        }
+
+        .table-container.active {
+            display: block;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .data-table th {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .data-table th:hover {
+            background: linear-gradient(135deg, #5a67d8, #6b46c1);
+        }
+
+        .data-table td {
+            padding: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            transition: background 0.3s;
+        }
+
+        .data-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .price-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .fixed-badge {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .percent-badge {
+            background: #fed7aa;
+            color: #ea580c;
+        }
+
+        .min-stay-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .stay-low { background: #22c55e; }
+        .stay-medium { background: #eab308; }
+        .stay-high { background: #ef4444; }
+
+        .weekday-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            font-size: 0.7rem;
+        }
+
+        .weekday-cell {
+            text-align: center;
+            padding: 2px;
+            border-radius: 3px;
+        }
+
+        .available { background: #22c55e; color: white; }
+        .restricted { background: #ef4444; color: white; }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .modal-header h2 {
+            color: #2d3748;
+            font-size: 1.5rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #9ca3af;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #374151;
+        }
+
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .detail-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .detail-item h4 {
+            color: #4a5568;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .detail-item p {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #2d3748;
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 60px 20px;
+            color: #9ca3af;
+        }
+
+        .no-data h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .no-data p {
+            font-size: 1.1rem;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e2e8f0;
+            border-left-color: #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .listing-info {
+                flex-direction: column;
+            }
+
+            .control-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .calendar-grid {
+                grid-template-columns: repeat(7, 1fr);
+                gap: 5px;
+            }
+
+            .calendar-cell {
+                min-height: 80px;
+                padding: 5px;
+            }
+
+            .calendar-header {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 20px;
+            }
+        }
+
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #6b7280;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header">
+            <h1>Date Specific Overrides</h1>
+            <p>Manage and visualize listing price overrides with advanced calendar and table views</p>
+            
+            <div class="listing-info">
+                <div class="info-card">
+                    <h3 id="listingId">L-123456</h3>
+                    <p>Listing ID</p>
+                </div>
+                <div class="info-card">
+                    <h3 id="totalOverrides">0</h3>
+                    <p>Total Overrides</p>
+                </div>
+                <div class="info-card">
+                    <h3 id="dateRange">-</h3>
+                    <p>Date Range</p>
+                </div>
+                <div class="info-card">
+                    <h3 id="priceTypes">-</h3>
+                    <p>Price Types</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls">
+            <h2>View Controls</h2>
+            <div class="control-row">
+                <button class="btn active" id="calendarViewBtn">Calendar View</button>
+                <button class="btn" id="tableViewBtn">Table View</button>
+                
+                <div class="input-group">
+                    <label for="dateInput">Go to Date:</label>
+                    <input type="date" id="dateInput">
+                </div>
+                
+                <div class="input-group">
+                    <label for="filterType">Filter by Type:</label>
+                    <select id="filterType">
+                        <option value="all">All Types</option>
+                        <option value="fixed">Fixed Prices</option>
+                        <option value="percent">Percentage</option>
+                    </select>
+                </div>
+                
+                <button class="btn" id="addOverrideBtn">Add Override</button>
+                <button class="btn" id="loadSampleBtn">Load Sample Data</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Summary Statistics -->
+            <div class="summary-stats">
+                <div class="stat-card">
+                    <div class="stat-value" id="avgPrice">$0</div>
+                    <div class="stat-label">Average Override Price</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="priceRange">$0 - $0</div>
+                    <div class="stat-label">Price Range</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgMinStay">0</div>
+                    <div class="stat-label">Average Min Stay</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="restrictionCount">0</div>
+                    <div class="stat-label">Dates with Restrictions</div>
+                </div>
+            </div>
+
+            <!-- Calendar View -->
+            <div class="calendar-container active" id="calendarView">
+                <div class="calendar-header">
+                    <div class="calendar-nav">
+                        <button class="nav-btn" id="prevMonth">‹</button>
+                        <div class="month-year" id="monthYear">January 2024</div>
+                        <button class="nav-btn" id="nextMonth">›</button>
+                    </div>
+                    <div>
+                        <button class="btn" id="todayBtn">Today</button>
+                    </div>
+                </div>
+                
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Calendar will be generated here -->
+                </div>
+            </div>
+
+            <!-- Table View -->
+            <div class="table-container" id="tableView">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('date')">Date ↕</th>
+                            <th onclick="sortTable('price')">Price ↕</th>
+                            <th onclick="sortTable('currency')">Currency ↕</th>
+                            <th onclick="sortTable('min_stay')">Min Stay ↕</th>
+                            <th>Price Range</th>
+                            <th>Check-in/out</th>
+                            <th>Reason</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Table rows will be generated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- No Data State -->
+            <div class="no-data" id="noDataState" style="display: none;">
+                <h3>No Overrides Found</h3>
+                <p>Start by adding your first override or load sample data to see the visualization in action.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Override Details -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Override Details</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalContent">
+                <!-- Modal content will be generated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data for demonstration
+        const sampleData = {
+            "overrides": [
+                {
+                    "date": "2024-01-15",
+                    "price": "144",
+                    "price_type": "fixed",
+                    "currency": "EUR",
+                    "min_stay": 5,
+                    "min_price": 100,
+                    "min_price_type": "fixed",
+                    "max_price": 155,
+                    "max_price_type": "fixed",
+                    "check_in_check_out_enabled": "1",
+                    "check_in": "0000010",
+                    "check_out": "0000001",
+                    "reason": "Weekend Premium"
+                },
+                {
+                    "date": "2024-01-20",
+                    "price": "120",
+                    "price_type": "fixed",
+                    "currency": "EUR",
+                    "min_stay": 3,
+                    "min_price": 90,
+                    "min_price_type": "fixed",
+                    "max_price": 140,
+                    "max_price_type": "fixed",
+                    "check_in_check_out_enabled": "1",
+                    "check_in": "1111111",
+                    "check_out": "1111111",
+                    "reason": "Special Event"
+                },
+                {
+                    "date": "2024-02-14",
+                    "price": "15",
+                    "price_type": "percent",
+                    "currency": "EUR",
+                    "min_stay": 2,
+                    "min_price": 80,
+                    "min_price_type": "fixed",
+                    "max_price": 200,
+                    "max_price_type": "fixed",
+                    "check_in_check_out_enabled": "1",
+                    "check_in": "1000001",
+                    "check_out": "0000010",
+                    "reason": "Valentine's Day Premium"
+                },
+                {
+                    "date": "2024-03-25",
+                    "price": "180",
+                    "price_type": "fixed",
+                    "currency": "EUR",
+                    "min_stay": 7,
+                    "min_price": 150,
+                    "min_price_type": "fixed",
+                    "max_price": 200,
+                    "max_price_type": "fixed",
+                    "check_in_check_out_enabled": "0",
+                    "check_in": "0000000",
+                    "check_out": "0000000",
+                    "reason": "Easter Holiday"
+                }
+            ]
+        };
+
+        // Global variables
+        let currentData = { overrides: [] };
+        let currentDate = new Date();
+        let currentView = 'calendar';
+        let sortField = 'date';
+        let sortDirection = 'asc';
+
+        // Weekday names for calendar
+        const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const weekdaysFull = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+        // Initialize the application
+        function init() {
+            setupEventListeners();
+            updateDisplay();
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('calendarViewBtn').addEventListener('click', () => switchView('calendar'));
+            document.getElementById('tableViewBtn').addEventListener('click', () => switchView('table'));
+            document.getElementById('prevMonth').addEventListener('click', () => changeMonth(-1));
+            document.getElementById('nextMonth').addEventListener('click', () => changeMonth(1));
+            document.getElementById('todayBtn').addEventListener('click', goToToday);
+            document.getElementById('loadSampleBtn').addEventListener('click', loadSampleData);
+            document.getElementById('dateInput').addEventListener('change', goToDate);
+            document.getElementById('filterType').addEventListener('change', updateDisplay);
+            document.getElementById('addOverrideBtn').addEventListener('click', showAddOverrideModal);
+
+            // Close modal when clicking outside
+            document.getElementById('detailModal').addEventListener('click', (e) => {
+                if (e.target.id === 'detailModal') {
+                    closeModal();
+                }
+            });
+        }
+
+        // Switch between calendar and table views
+        function switchView(view) {
+            currentView = view;
+            
+            // Update button states
+            document.getElementById('calendarViewBtn').classList.toggle('active', view === 'calendar');
+            document.getElementById('tableViewBtn').classList.toggle('active', view === 'table');
+            
+            // Update view containers
+            document.getElementById('calendarView').classList.toggle('active', view === 'calendar');
+            document.getElementById('tableView').classList.toggle('active', view === 'table');
+            
+            updateDisplay();
+        }
+
+        // Change month in calendar view
+        function changeMonth(delta) {
+            currentDate.setMonth(currentDate.getMonth() + delta);
+            updateDisplay();
+        }
+
+        // Go to today
+        function goToToday() {
+            currentDate = new Date();
+            updateDisplay();
+        }
+
+        // Go to specific date
+        function goToDate() {
+            const dateInput = document.getElementById('dateInput');
+            if (dateInput.value) {
+                currentDate = new Date(dateInput.value);
+                updateDisplay();
+            }
+        }
+
+        // Load sample data
+        function loadSampleData() {
+            currentData = JSON.parse(JSON.stringify(sampleData));
+            updateDisplay();
+            updateSummaryStats();
+        }
+
+        // Update the main display
+        function updateDisplay() {
+            updateHeaderInfo();
+            
+            if (currentView === 'calendar') {
+                renderCalendar();
+            } else {
+                renderTable();
+            }
+            
+            // Show/hide no data state
+            const hasData = currentData.overrides && currentData.overrides.length > 0;
+            document.getElementById('noDataState').style.display = hasData ? 'none' : 'block';
+        }
+
+        // Update header information
+        function updateHeaderInfo() {
+            const overrides = getFilteredOverrides();
+            
+            document.getElementById('totalOverrides').textContent = overrides.length;
+            document.getElementById('monthYear').textContent = currentDate.toLocaleDateString('en-US', { 
+                month: 'long', 
+                year: 'numeric' 
+            });
+
+            if (overrides.length > 0) {
+                const dates = overrides.map(o => new Date(o.date)).sort((a, b) => a - b);
+                const earliestDate = dates[0].toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                const latestDate = dates[dates.length - 1].toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                document.getElementById('dateRange').textContent = `${earliestDate} - ${latestDate}`;
+                
+                const fixedCount = overrides.filter(o => o.price_type === 'fixed').length;
+                const percentCount = overrides.filter(o => o.price_type === 'percent').length;
+                document.getElementById('priceTypes').textContent = `${fixedCount}F / ${percentCount}P`;
+            } else {
+                document.getElementById('dateRange').textContent = '-';
+                document.getElementById('priceTypes').textContent = '-';
+            }
+        }
+
+        // Get filtered overrides based on current filters
+        function getFilteredOverrides() {
+            const filterType = document.getElementById('filterType').value;
+            let overrides = currentData.overrides || [];
+            
+            if (filterType !== 'all') {
+                overrides = overrides.filter(o => o.price_type === filterType);
+            }
+            
+            return overrides;
+        }
+
+        // Render calendar view
+        function renderCalendar() {
+            const calendarGrid = document.getElementById('calendarGrid');
+            calendarGrid.innerHTML = '';
+            
+            // Add weekday headers
+            weekdays.forEach(day => {
+                const headerCell = document.createElement('div');
+                headerCell.className = 'calendar-header-cell';
+                headerCell.textContent = day;
+                calendarGrid.appendChild(headerCell);
+            });
+            
+            // Get first day of month and days in month
+            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            const startDate = new Date(firstDay);
+            startDate.setDate(startDate.getDate() - firstDay.getDay());
+            
+            // Generate calendar cells
+            for (let i = 0; i < 42; i++) { // 6 weeks * 7 days
+                const cellDate = new Date(startDate);
+                cellDate.setDate(startDate.getDate() + i);
+                
+                const cell = document.createElement('div');
+                cell.className = 'calendar-cell';
+                
+                // Check if date is in current month
+                if (cellDate.getMonth() !== currentDate.getMonth()) {
+                    cell.classList.add('other-month');
+                }
+                
+                // Find override for this date
+                const dateStr = cellDate.toISOString().split('T')[0];
+                const override = getFilteredOverrides().find(o => o.date === dateStr);
+                
+                // Set cell content
+                cell.innerHTML = `
+                    <div class="date-number">${cellDate.getDate()}</div>
+                    ${override ? getOverrideHTML(override) : ''}
+                `;
+                
+                // Add override styling
+                if (override) {
+                    cell.classList.add('has-override');
+                    if (override.price_type === 'percent') {
+                        cell.classList.add('percentage-override');
+                    }
+                }
+                
+                // Add click handler
+                cell.addEventListener('click', () => {
+                    if (override) {
+                        showOverrideDetails(override);
+                    } else {
+                        showAddOverrideModal(dateStr);
+                    }
+                });
+                
+                calendarGrid.appendChild(cell);
+            }
+        }
+
+        // Generate HTML for override information in calendar cell
+        function getOverrideHTML(override) {
+            const priceDisplay = override.price_type === 'percent' ? 
+                `${override.price}%` : 
+                `${override.currency}${override.price}`;
+            
+            const minStayClass = getMinStayClass(override.min_stay);
+            
+            return `
+                <div class="override-info">
+                    <div class="price-info">${priceDisplay}</div>
+                    <div class="min-stay">Min: ${override.min_stay}n</div>
+                    ${getCheckInOutHTML(override)}
+                </div>
+            `;
+        }
+
+        // Generate check-in/out HTML
+        function getCheckInOutHTML(override) {
+            if (override.check_in_check_out_enabled === "0") {
+                return '';
+            }
+            
+            const checkInAvailable = override.check_in.includes('1');
+            const checkOutAvailable = override.check_out.includes('1');
+            
+            return `
+                <div class="checkin-checkout">
+                    ${checkInAvailable ? '<span class="checkin">CI</span>' : ''}
+                    ${checkOutAvailable ? '<span class="checkout">CO</span>' : ''}
+                </div>
+            `;
+        }
+
+        // Get min stay CSS class
+        function getMinStayClass(minStay) {
+            if (minStay <= 2) return 'stay-low';
+            if (minStay <= 5) return 'stay-medium';
+            return 'stay-high';
+        }
+
+        // Render table view
+        function renderTable() {
+            const tableBody = document.getElementById('tableBody');
+            const overrides = getFilteredOverrides();
+            
+            // Sort overrides
+            const sorted = [...overrides].sort((a, b) => {
+                let aVal = a[sortField];
+                let bVal = b[sortField];
+                
+                if (sortField === 'date') {
+                    aVal = new Date(aVal);
+                    bVal = new Date(bVal);
+                } else if (sortField === 'price' || sortField === 'min_stay') {
+                    aVal = parseFloat(aVal);
+                    bVal = parseFloat(bVal);
+                }
+                
+                if (sortDirection === 'asc') {
+                    return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+                } else {
+                    return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+                }
+            });
+            
+            tableBody.innerHTML = sorted.map(override => `
+                <tr onclick="showOverrideDetails(${JSON.stringify(override).replace(/"/g, '&quot;')})">
+                    <td>${new Date(override.date).toLocaleDateString()}</td>
+                    <td>
+                        ${override.currency}${override.price}
+                        <span class="price-badge ${override.price_type === 'fixed' ? 'fixed-badge' : 'percent-badge'}">
+                            ${override.price_type}
+                        </span>
+                    </td>
+                    <td>${override.currency}</td>
+                    <td>
+                        <span class="min-stay-indicator ${getMinStayClass(override.min_stay)}"></span>
+                        ${override.min_stay} nights
+                    </td>
+                    <td>${override.currency}${override.min_price} - ${override.currency}${override.max_price}</td>
+                    <td>${getCheckInOutTableHTML(override)}</td>
+                    <td>${override.reason}</td>
+                    <td>
+                        <button class="btn" onclick="event.stopPropagation(); editOverride('${override.date}')">Edit</button>
+                        <button class="btn" onclick="event.stopPropagation(); deleteOverride('${override.date}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Generate check-in/out HTML for table
+        function getCheckInOutTableHTML(override) {
+            if (override.check_in_check_out_enabled === "0") {
+                return '<span style="color: #9ca3af;">Disabled</span>';
+            }
+            
+            return `
+                <div class="weekday-grid">
+                    ${Array.from({length: 7}, (_, i) => {
+                        const checkIn = override.check_in[i] === '1';
+                        const checkOut = override.check_out[i] === '1';
+                        return `<div class="weekday-cell ${checkIn && checkOut ? 'available' : 'restricted'}">${weekdays[i][0]}</div>`;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        // Sort table
+        function sortTable(field) {
+            if (sortField === field) {
+                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                sortField = field;
+                sortDirection = 'asc';
+            }
+            renderTable();
+        }
+
+        // Show override details modal
+        function showOverrideDetails(override) {
+            const modal = document.getElementById('detailModal');
+            const modalContent = document.getElementById('modalContent');
+            
+            modalContent.innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <h4>Date</h4>
+                        <p>${new Date(override.date).toLocaleDateString('en-US', { 
+                            weekday: 'long', 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                        })}</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Price</h4>
+                        <p>${override.currency}${override.price} (${override.price_type})</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Minimum Stay</h4>
+                        <p>${override.min_stay} nights</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Price Range</h4>
+                        <p>${override.currency}${override.min_price} - ${override.currency}${override.max_price}</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Currency</h4>
+                        <p>${override.currency}</p>
+                    </div>
+                    <div class="detail-item">
+                        <h4>Reason</h4>
+                        <p>${override.reason}</p>
+                    </div>
+                </div>
+                
+                ${override.check_in_check_out_enabled === "1" ? `
+                    <div style="margin-top: 20px;">
+                        <h4 style="margin-bottom: 15px; color: #4a5568;">Check-in/Check-out Availability</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                            <div>
+                                <h5 style="margin-bottom: 10px; color: #059669;">Check-in Days</h5>
+                                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;">
+                                    ${weekdaysFull.map((day, i) => `
+                                        <div style="text-align: center; padding: 8px; border-radius: 5px; font-size: 0.8rem; 
+                                                    background: ${override.check_in[i] === '1' ? '#22c55e' : '#ef4444'}; 
+                                                    color: white;">
+                                            ${day.substring(0, 3)}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <div>
+                                <h5 style="margin-bottom: 10px; color: #dc2626;">Check-out Days</h5>
+                                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px;">
+                                    ${weekdaysFull.map((day, i) => `
+                                        <div style="text-align: center; padding: 8px; border-radius: 5px; font-size: 0.8rem;
+                                                    background: ${override.check_out[i] === '1' ? '#22c55e' : '#ef4444'}; 
+                                                    color: white;">
+                                            ${day.substring(0, 3)}
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                ` : '<p style="margin-top: 20px; color: #9ca3af;">Check-in/Check-out restrictions are disabled for this override.</p>'}
+                
+                <div style="margin-top: 30px; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="btn" onclick="editOverride('${override.date}')">Edit Override</button>
+                    <button class="btn" onclick="deleteOverride('${override.date}')">Delete Override</button>
+                </div>
+            `;
+            
+            modal.classList.add('active');
+        }
+
+        // Close modal
+        function closeModal() {
+            document.getElementById('detailModal').classList.remove('active');
+        }
+
+        // Placeholder functions for CRUD operations
+        function editOverride(date) {
+            alert(`Edit override for ${date} - Feature coming soon!`);
+            closeModal();
+        }
+
+        function deleteOverride(date) {
+            if (confirm(`Are you sure you want to delete the override for ${date}?`)) {
+                currentData.overrides = currentData.overrides.filter(o => o.date !== date);
+                updateDisplay();
+                updateSummaryStats();
+                closeModal();
+            }
+        }
+
+        function showAddOverrideModal(date = null) {
+            alert(`Add override modal ${date ? `for ${date}` : ''} - Feature coming soon!`);
+        }
+
+        // Update summary statistics
+        function updateSummaryStats() {
+            const overrides = getFilteredOverrides();
+            
+            if (overrides.length === 0) {
+                document.getElementById('avgPrice').textContent = '$0';
+                document.getElementById('priceRange').textContent = '$0 - $0';
+                document.getElementById('avgMinStay').textContent = '0';
+                document.getElementById('restrictionCount').textContent = '0';
+                return;
+            }
+            
+            // Calculate average price (only for fixed prices)
+            const fixedPrices = overrides.filter(o => o.price_type === 'fixed').map(o => parseFloat(o.price));
+            const avgPrice = fixedPrices.length > 0 ? Math.round(fixedPrices.reduce((a, b) => a + b, 0) / fixedPrices.length) : 0;
+            document.getElementById('avgPrice').textContent = `€${avgPrice}`;
+            
+            // Calculate price range
+            if (fixedPrices.length > 0) {
+                const minPrice = Math.min(...fixedPrices);
+                const maxPrice = Math.max(...fixedPrices);
+                document.getElementById('priceRange').textContent = `€${minPrice} - €${maxPrice}`;
+            }
+            
+            // Calculate average min stay
+            const avgMinStay = Math.round(overrides.reduce((sum, o) => sum + o.min_stay, 0) / overrides.length);
+            document.getElementById('avgMinStay').textContent = `${avgMinStay} nights`;
+            
+            // Count restrictions
+            const restrictionCount = overrides.filter(o => o.check_in_check_out_enabled === "1").length;
+            document.getElementById('restrictionCount').textContent = restrictionCount;
+        }
+
+        // Initialize the application when the page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

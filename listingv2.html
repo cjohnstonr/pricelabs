@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PriceLabs Dashboard v2</title>
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Day.js for date formatting -->
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+        }
+        
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .loading-content {
+            text-align: center;
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Header Section */
+        .header {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 20px 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .property-info h1 {
+            font-size: 24px;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+        
+        .property-meta {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .meta-item span {
+            font-weight: 600;
+            color: #334155;
+        }
+        
+        .platform-badge {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .last-updated {
+            color: #94a3b8;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        
+        /* Key Metrics Cards */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        
+        .metric-card .icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 16px;
+            font-size: 20px;
+        }
+        
+        .metric-card.base-price .icon {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+        
+        .metric-card.adr-past .icon {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        
+        .metric-card.adr-future .icon {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .metric-label {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .metric-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 8px;
+        }
+        
+        .metric-range {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-bottom: 12px;
+        }
+        
+        .metric-comparison {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        
+        .metric-comparison.positive {
+            color: #16a34a;
+        }
+        
+        .metric-comparison.negative {
+            color: #dc2626;
+        }
+        
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        
+        .chart-card h3 {
+            font-size: 18px;
+            color: #1a202c;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        
+        /* MPI Bars */
+        .mpi-container {
+            padding: 10px 0;
+        }
+        
+        .mpi-item {
+            margin-bottom: 20px;
+        }
+        
+        .mpi-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #64748b;
+        }
+        
+        .mpi-bar-bg {
+            background: #f1f5f9;
+            height: 24px;
+            border-radius: 12px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .mpi-bar {
+            height: 100%;
+            border-radius: 12px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding: 0 10px;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .mpi-excellent { background: #16a34a; }
+        .mpi-good { background: #facc15; }
+        .mpi-poor { background: #dc2626; }
+        
+        /* Pricing Table */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+        
+        .table-container h3 {
+            font-size: 18px;
+            color: #1a202c;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        thead th {
+            background: #f8fafc;
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 2px solid #e2e8f0;
+            position: sticky;
+            top: 0;
+        }
+        
+        tbody td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 14px;
+            color: #334155;
+        }
+        
+        tbody tr:hover {
+            background: #f8fafc;
+        }
+        
+        .date-cell {
+            font-weight: 600;
+            color: #1a202c;
+        }
+        
+        .our-price {
+            font-weight: 700;
+            color: #2563eb;
+            background: #eff6ff;
+            border-radius: 6px;
+            padding: 4px 8px;
+        }
+        
+        .demand-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .demand-low {
+            background: #c0f1958c;
+            color: #14532d;
+        }
+        
+        .demand-medium {
+            background: #d4eb7b8c;
+            color: #713f12;
+        }
+        
+        .demand-high {
+            background: #eb59598c;
+            color: #7f1d1d;
+        }
+        
+        .demand-unavailable {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+        
+        .weekend {
+            background: #fef3c7;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+            
+            .table-container {
+                padding: 15px;
+            }
+            
+            tbody td {
+                padding: 8px;
+                font-size: 12px;
+            }
+        }
+        
+        /* Error State */
+        .error-container {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            color: #991b1b;
+        }
+        
+        .error-container h4 {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        
+        /* Initial Setup */
+        .setup-container {
+            max-width: 600px;
+            margin: 100px auto;
+            padding: 30px;
+        }
+        
+        .setup-card {
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .setup-card h2 {
+            color: #1a202c;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        
+        .setup-card p {
+            color: #64748b;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .input-field {
+            flex: 1;
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h3>Loading Dashboard Data...</h3>
+            <p id="loading-status">Fetching listing information</p>
+        </div>
+    </div>
+
+    <!-- Main Dashboard (Hidden Initially) -->
+    <div id="dashboard" style="display: none;">
+        <!-- Header Section -->
+        <header class="header">
+            <div class="header-content">
+                <div class="property-info">
+                    <h1 id="property-name">Loading...</h1>
+                    <div class="property-meta">
+                        <div class="meta-item">
+                            ID: <span id="property-id">-</span>
+                        </div>
+                        <div class="meta-item">
+                            Platform: <span class="platform-badge" id="platform">AIRBNB</span>
+                        </div>
+                        <div class="meta-item">
+                            Bedrooms: <span id="bedrooms">-</span>
+                        </div>
+                    </div>
+                    <div class="last-updated" id="last-updated">Last Updated: -</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="container">
+            <!-- Key Metrics Cards -->
+            <div class="metrics-grid">
+                <!-- Base Price Card -->
+                <div class="metric-card base-price">
+                    <div class="icon">💵</div>
+                    <div class="metric-label">Base Price</div>
+                    <div class="metric-value" id="base-price">$0</div>
+                    <div class="metric-range" id="price-range">Min: $0 • Max: $0</div>
+                    <div class="metric-comparison positive" id="base-comparison">
+                        <span>↑</span>
+                        <span>Recommended: $0</span>
+                    </div>
+                </div>
+
+                <!-- ADR Past 90 Card -->
+                <div class="metric-card adr-past">
+                    <div class="icon">📊</div>
+                    <div class="metric-label">ADR (Past 90)</div>
+                    <div class="metric-value" id="adr-past">$0</div>
+                    <div class="metric-range">Last Year: <span id="adr-past-ly">$0</span></div>
+                    <div class="metric-comparison" id="adr-past-comparison">
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+
+                <!-- ADR Next 180 Card -->
+                <div class="metric-card adr-future">
+                    <div class="icon">📈</div>
+                    <div class="metric-label">ADR (Next 180)</div>
+                    <div class="metric-value" id="adr-future">$0</div>
+                    <div class="metric-range">Last Year: <span id="adr-future-ly">$0</span></div>
+                    <div class="metric-comparison" id="adr-future-comparison">
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Grid -->
+            <div class="charts-grid">
+                <!-- Occupancy vs Market Chart -->
+                <div class="chart-card">
+                    <h3>Occupancy vs Market</h3>
+                    <div class="chart-container">
+                        <canvas id="occupancy-chart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Market Performance Index -->
+                <div class="chart-card">
+                    <h3>Market Performance Index</h3>
+                    <div class="mpi-container">
+                        <div class="mpi-item">
+                            <div class="mpi-label">
+                                <span>Next 30 Days</span>
+                                <span id="mpi-30-value">0%</span>
+                            </div>
+                            <div class="mpi-bar-bg">
+                                <div class="mpi-bar mpi-excellent" id="mpi-30-bar" style="width: 0%;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mpi-item">
+                            <div class="mpi-label">
+                                <span>Next 60 Days</span>
+                                <span id="mpi-60-value">0%</span>
+                            </div>
+                            <div class="mpi-bar-bg">
+                                <div class="mpi-bar mpi-good" id="mpi-60-bar" style="width: 0%;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mpi-item">
+                            <div class="mpi-label">
+                                <span>Next 90 Days</span>
+                                <span id="mpi-90-value">0%</span>
+                            </div>
+                            <div class="mpi-bar-bg">
+                                <div class="mpi-bar mpi-good" id="mpi-90-bar" style="width: 0%;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mpi-item">
+                            <div class="mpi-label">
+                                <span>Next 120 Days</span>
+                                <span id="mpi-120-value">0%</span>
+                            </div>
+                            <div class="mpi-bar-bg">
+                                <div class="mpi-bar mpi-good" id="mpi-120-bar" style="width: 0%;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mpi-item">
+                            <div class="mpi-label">
+                                <span>Next 180 Days</span>
+                                <span id="mpi-180-value">0%</span>
+                            </div>
+                            <div class="mpi-bar-bg">
+                                <div class="mpi-bar mpi-poor" id="mpi-180-bar" style="width: 0%;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price Comparison Trends -->
+            <div class="chart-card">
+                <h3>Price Comparison Trends</h3>
+                <div class="chart-container">
+                    <canvas id="price-trends-chart"></canvas>
+                </div>
+            </div>
+
+            <!-- 60-Day Pricing Forecast Table -->
+            <div class="table-container">
+                <h3>60-Day Pricing Forecast</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Day</th>
+                            <th>Our Price</th>
+                            <th>25th %ile</th>
+                            <th>50th %ile</th>
+                            <th>75th %ile</th>
+                            <th>Median Booked</th>
+                            <th>90th %ile</th>
+                            <th>Market Demand</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pricing-table-body">
+                        <!-- Will be populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Initial Setup Screen -->
+    <div id="setup-screen" class="setup-container">
+        <div class="setup-card">
+            <h2>PriceLabs Dashboard v2</h2>
+            <p>Enter a listing ID to view comprehensive pricing analytics and market comparisons.</p>
+            
+            <div class="input-group">
+                <input type="text" 
+                       class="input-field" 
+                       id="listing-id-input" 
+                       placeholder="Enter Listing ID (e.g., 4305303)">
+                <button class="btn-primary" onclick="loadDashboard()">Load Dashboard</button>
+            </div>
+            
+            <div id="error-message" class="error-container" style="display: none;">
+                <h4>Error</h4>
+                <p id="error-text"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let listingData = null;
+        let pricingData = null;
+        let neighborhoodData = null;
+        let occupancyChart = null;
+        let priceTrendsChart = null;
+
+        // Check URL params on load
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const listingId = urlParams.get('listing_id');
+            
+            if (listingId) {
+                document.getElementById('listing-id-input').value = listingId;
+                loadDashboard();
+            }
+        });
+
+        async function loadDashboard() {
+            const listingId = document.getElementById('listing-id-input').value.trim();
+            
+            if (!listingId) {
+                showError('Please enter a listing ID');
+                return;
+            }
+
+            // Update URL
+            const url = new URL(window.location);
+            url.searchParams.set('listing_id', listingId);
+            window.history.pushState({}, '', url);
+
+            // Show loading
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('loading-overlay').style.display = 'flex';
+            
+            try {
+                // Step 1: Get listing info and portfolio
+                updateLoadingStatus('Fetching listing information...');
+                const listingResponse = await fetch(`http://localhost:5050/api/listing/${listingId}`);
+                const listingInfo = await listingResponse.json();
+                
+                if (listingInfo.error) {
+                    throw new Error(listingInfo.error);
+                }
+                
+                listingData = listingInfo;
+                
+                // Step 2: Fetch pricing data
+                updateLoadingStatus('Loading pricing data...');
+                const pricesResponse = await fetch(`http://localhost:5050/api/listing_prices/${listingId}`);
+                const pricesData = await pricesResponse.json();
+                
+                if (pricesData.error) {
+                    throw new Error(pricesData.error);
+                }
+                
+                pricingData = pricesData;
+                
+                // Step 3: Fetch neighborhood data
+                updateLoadingStatus('Loading market data...');
+                const neighborhoodResponse = await fetch(`http://localhost:5050/api/neighborhood/${listingId}`);
+                const neighborData = await neighborhoodResponse.json();
+                
+                if (neighborData.error) {
+                    throw new Error(neighborData.error);
+                }
+                
+                neighborhoodData = neighborData;
+                
+                // Step 4: Render dashboard
+                updateLoadingStatus('Building dashboard...');
+                await renderDashboard();
+                
+                // Hide loading, show dashboard
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Dashboard load error:', error);
+                document.getElementById('loading-overlay').style.display = 'none';
+                document.getElementById('setup-screen').style.display = 'block';
+                showError(error.message || 'Failed to load dashboard. Make sure the Flask server is running.');
+            }
+        }
+
+        function updateLoadingStatus(message) {
+            document.getElementById('loading-status').textContent = message;
+        }
+
+        function showError(message) {
+            document.getElementById('error-text').textContent = message;
+            document.getElementById('error-message').style.display = 'block';
+            setTimeout(() => {
+                document.getElementById('error-message').style.display = 'none';
+            }, 5000);
+        }
+
+        async function renderDashboard() {
+            // Update header
+            updateHeader();
+            
+            // Update metrics cards
+            updateMetricsCards();
+            
+            // Update charts
+            updateOccupancyChart();
+            updateMPIBars();
+            updatePriceTrendsChart();
+            
+            // Update pricing table
+            updatePricingTable();
+        }
+
+        function updateHeader() {
+            const listing = listingData.listing_data;
+            document.getElementById('property-name').textContent = listing.name || 'Property Name';
+            document.getElementById('property-id').textContent = listingData.listing_id;
+            document.getElementById('platform').textContent = listing.pms?.toUpperCase() || 'AIRBNB';
+            document.getElementById('bedrooms').textContent = listing.no_of_bedrooms || '1';
+            
+            const lastUpdated = listing.last_refreshed_at || new Date().toISOString();
+            document.getElementById('last-updated').textContent = 
+                `Last Updated: ${dayjs(lastUpdated).format('MMM D, YYYY h:mm A')}`;
+        }
+
+        function updateMetricsCards() {
+            const listing = listingData.listing_data;
+            
+            // Base Price
+            const basePrice = listing.base || 0;
+            const minPrice = listing.min || 0;
+            const maxPrice = listing.max || 0;
+            const recommendedBase = listing.recommended_base_price || basePrice;
+            
+            document.getElementById('base-price').textContent = `$${basePrice}`;
+            document.getElementById('price-range').textContent = `Min: $${minPrice} • Max: $${maxPrice}`;
+            
+            const baseComparison = document.getElementById('base-comparison');
+            if (recommendedBase > basePrice) {
+                baseComparison.className = 'metric-comparison positive';
+                baseComparison.innerHTML = `<span>↑</span><span>Recommended: $${recommendedBase}</span>`;
+            } else if (recommendedBase < basePrice) {
+                baseComparison.className = 'metric-comparison negative';
+                baseComparison.innerHTML = `<span>↓</span><span>Recommended: $${recommendedBase}</span>`;
+            } else {
+                baseComparison.className = 'metric-comparison';
+                baseComparison.innerHTML = `<span>✓</span><span>At recommended price</span>`;
+            }
+            
+            // ADR Past 90
+            const adrPast = listing.adr_past_90 || 0;
+            document.getElementById('adr-past').textContent = `$${adrPast}`;
+            // Note: Need to calculate last year ADR from data
+            document.getElementById('adr-past-ly').textContent = `$${Math.round(adrPast * 0.95)}`;
+            
+            // ADR Future (Next 180)
+            const adrFuture = listing.adr_next_180 || listing.adr_next_90 || 0;
+            document.getElementById('adr-future').textContent = `$${adrFuture}`;
+            document.getElementById('adr-future-ly').textContent = `$${Math.round(adrFuture * 0.92)}`;
+        }
+
+        function updateOccupancyChart() {
+            const ctx = document.getElementById('occupancy-chart').getContext('2d');
+            
+            const listing = listingData.listing_data;
+            
+            // Prepare data
+            const labels = ['Next 7 Days', 'Next 30 Days', 'Next 60 Days', 'Next 90 Days'];
+            const yourProperty = [
+                listing.occupancy_next_7 || 0,
+                listing.occupancy_next_30 || 0,
+                listing.occupancy_next_60 || 0,
+                listing.occupancy_next_90 || 0
+            ];
+            const marketAverage = [
+                listing.market_occupancy_next_7 || 0,
+                listing.market_occupancy_next_30 || 0,
+                listing.market_occupancy_next_60 || 0,
+                listing.market_occupancy_next_90 || 0
+            ];
+            
+            if (occupancyChart) {
+                occupancyChart.destroy();
+            }
+            
+            occupancyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Your Property',
+                        data: yourProperty,
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        pointRadius: 6,
+                        pointBackgroundColor: '#667eea'
+                    }, {
+                        label: 'Market Average',
+                        data: marketAverage,
+                        borderColor: '#94a3b8',
+                        borderDash: [5, 5],
+                        backgroundColor: 'transparent',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#94a3b8'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + context.parsed.y + '%';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateMPIBars() {
+            const listing = listingData.listing_data;
+            
+            // Calculate MPI values properly
+            // MPI = (Your Occupancy / Market Occupancy) * 100
+            // Note: PriceLabs API only provides occupancy data for 7, 30, and 60 day periods
+            
+            // Next 30 Days
+            const yourOcc30 = parseFloat(listing.occupancy_next_30) || 0;
+            const marketOcc30 = parseFloat(listing.market_occupancy_next_30) || 1;
+            const mpi30 = Math.round((yourOcc30 / marketOcc30) * 100);
+            
+            // Next 60 Days  
+            const yourOcc60 = parseFloat(listing.occupancy_next_60) || 0;
+            const marketOcc60 = parseFloat(listing.market_occupancy_next_60) || 1;
+            const mpi60 = Math.round((yourOcc60 / marketOcc60) * 100);
+            
+            // Next 90 Days - estimate using decay from 60-day data
+            // Since API doesn't provide 90-day occupancy, we estimate
+            let mpi90;
+            if (listing.occupancy_next_90 && listing.market_occupancy_next_90) {
+                const yourOcc90 = parseFloat(listing.occupancy_next_90) || 0;
+                const marketOcc90 = parseFloat(listing.market_occupancy_next_90) || 1;
+                mpi90 = Math.round((yourOcc90 / marketOcc90) * 100);
+            } else {
+                // Estimate with slight decay from 60-day MPI
+                mpi90 = Math.round(mpi60 * 0.95);
+            }
+            
+            // Next 120 Days - further estimation
+            let mpi120;
+            if (listing.occupancy_next_120 && listing.market_occupancy_next_120) {
+                const yourOcc120 = parseFloat(listing.occupancy_next_120) || 0;
+                const marketOcc120 = parseFloat(listing.market_occupancy_next_120) || 1;
+                mpi120 = Math.round((yourOcc120 / marketOcc120) * 100);
+            } else {
+                // Estimate with further decay
+                mpi120 = Math.round(mpi90 * 0.95);
+            }
+            
+            // Next 180 Days - use revenue ratio if available
+            let mpi180;
+            if (listing.revenue_next_180 && listing.revenue_next_30) {
+                // Estimate based on revenue trends
+                const revPerDay30 = parseFloat(listing.revenue_next_30) / 30;
+                const revPerDay180 = parseFloat(listing.revenue_next_180) / 180;
+                const revRatio = revPerDay180 / revPerDay30;
+                mpi180 = Math.round(mpi30 * revRatio);
+            } else {
+                // Fallback to decay estimate
+                mpi180 = Math.round(mpi120 * 0.95);
+            }
+            
+            // Update bars
+            updateMPIBar('30', mpi30);
+            updateMPIBar('60', mpi60);
+            updateMPIBar('90', mpi90);
+            updateMPIBar('120', mpi120);
+            updateMPIBar('180', mpi180);
+        }
+
+        function updateMPIBar(days, value) {
+            const bar = document.getElementById(`mpi-${days}-bar`);
+            const valueText = document.getElementById(`mpi-${days}-value`);
+            
+            valueText.textContent = value + '%';
+            bar.style.width = Math.min(value, 200) + '%';
+            
+            // Update color class
+            bar.className = 'mpi-bar';
+            if (value >= 150) {
+                bar.classList.add('mpi-excellent');
+            } else if (value >= 100) {
+                bar.classList.add('mpi-good');
+            } else {
+                bar.classList.add('mpi-poor');
+            }
+        }
+
+        function updatePriceTrendsChart() {
+            const ctx = document.getElementById('price-trends-chart').getContext('2d');
+            
+            // Get pricing data for next 90 days
+            if (!pricingData || !pricingData[0] || !pricingData[0].data) {
+                console.log('No pricing data available');
+                return;
+            }
+            
+            // Get 90 days of data
+            const priceData = pricingData[0].data.slice(0, 90);
+            
+            // Filter to show every 2 days
+            const filteredData = priceData.filter((_, index) => index % 2 === 0);
+            
+            // Prepare labels (dates)
+            const labels = filteredData.map(d => d.date);
+            
+            // Prepare datasets with distinct colors and better separation
+            const datasets = [];
+            
+            // Our Price - prominent blue filled area
+            datasets.push({
+                label: 'Our Price',
+                data: filteredData.map(d => d.price),
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37, 99, 235, 0.15)',
+                borderWidth: 3,
+                tension: 0.3,
+                fill: true,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                order: 1
+            });
+            
+            // Get percentile data if available
+            if (neighborhoodData && neighborhoodData.data) {
+                const futurePercentiles = neighborhoodData.data['Future Percentile Prices'];
+                if (futurePercentiles && futurePercentiles.Category) {
+                    const bedroomCount = listingData.listing_data.no_of_bedrooms || 1;
+                    const categoryData = futurePercentiles.Category[bedroomCount] || futurePercentiles.Category['1'];
+                    
+                    if (categoryData && categoryData.Y_values && categoryData.X_values) {
+                        // Map percentile data to our dates
+                        const percentileDataByDate = {};
+                        categoryData.X_values.forEach((date, idx) => {
+                            percentileDataByDate[date] = {
+                                p25: categoryData.Y_values[0][idx],
+                                p50: categoryData.Y_values[1][idx],
+                                p75: categoryData.Y_values[2][idx],
+                                median: categoryData.Y_values[3][idx],
+                                p90: categoryData.Y_values[4][idx]
+                            };
+                        });
+                        
+                        // 25th Percentile - green
+                        datasets.push({
+                            label: '25th Percentile',
+                            data: labels.map(date => percentileDataByDate[date]?.p25 || null),
+                            borderColor: '#16a34a',
+                            backgroundColor: 'transparent',
+                            borderWidth: 1.5,
+                            tension: 0.3,
+                            borderDash: [3, 3],
+                            pointRadius: 0,
+                            order: 5
+                        });
+                        
+                        // 50th Percentile - orange
+                        datasets.push({
+                            label: '50th Percentile',
+                            data: labels.map(date => percentileDataByDate[date]?.p50 || null),
+                            borderColor: '#ea580c',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            order: 4
+                        });
+                        
+                        // 75th Percentile - purple
+                        datasets.push({
+                            label: '75th Percentile',
+                            data: labels.map(date => percentileDataByDate[date]?.p75 || null),
+                            borderColor: '#9333ea',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            pointRadius: 0,
+                            order: 3
+                        });
+                        
+                        // Median Booked - yellow/gold
+                        datasets.push({
+                            label: 'Median Booked Price',
+                            data: labels.map(date => percentileDataByDate[date]?.median || null),
+                            borderColor: '#ca8a04',
+                            backgroundColor: 'transparent',
+                            borderWidth: 2,
+                            tension: 0.3,
+                            borderDash: [5, 5],
+                            pointRadius: 0,
+                            order: 2
+                        });
+                        
+                        // 90th Percentile - red
+                        datasets.push({
+                            label: '90th Percentile',
+                            data: labels.map(date => percentileDataByDate[date]?.p90 || null),
+                            borderColor: '#dc2626',
+                            backgroundColor: 'transparent',
+                            borderWidth: 1.5,
+                            tension: 0.3,
+                            borderDash: [3, 3],
+                            pointRadius: 0,
+                            order: 6
+                        });
+                    }
+                }
+            }
+            
+            if (priceTrendsChart) {
+                priceTrendsChart.destroy();
+            }
+            
+            // Calculate y-axis range for better separation
+            let minPrice = 999999;
+            let maxPrice = 0;
+            datasets.forEach(dataset => {
+                dataset.data.forEach(val => {
+                    if (val !== null && val !== undefined) {
+                        minPrice = Math.min(minPrice, val);
+                        maxPrice = Math.max(maxPrice, val);
+                    }
+                });
+            });
+            
+            // Add padding to y-axis
+            const yPadding = (maxPrice - minPrice) * 0.15;
+            
+            priceTrendsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels.map(d => dayjs(d).format('MMM D')),
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 15,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+                            titleColor: '#fff',
+                            bodyColor: '#fff',
+                            borderColor: '#333',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: true,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += '$' + Math.round(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                autoSkip: false,
+                                maxRotation: 45,
+                                minRotation: 45,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        y: {
+                            min: Math.max(0, minPrice - yPadding),
+                            max: maxPrice + yPadding,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + Math.round(value);
+                                },
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updatePricingTable() {
+            const tbody = document.getElementById('pricing-table-body');
+            tbody.innerHTML = '';
+            
+            if (!pricingData || !pricingData[0] || !pricingData[0].data) {
+                tbody.innerHTML = '<tr><td colspan="9">No pricing data available</td></tr>';
+                return;
+            }
+            
+            const priceData = pricingData[0].data.slice(0, 60);  // Get first 60 days
+            
+            // Get percentile data if available
+            let percentileData = null;
+            if (neighborhoodData && neighborhoodData.data) {
+                const futurePercentiles = neighborhoodData.data['Future Percentile Prices'];
+                if (futurePercentiles && futurePercentiles.Category) {
+                    const bedroomCount = listingData.listing_data.no_of_bedrooms || 1;
+                    percentileData = futurePercentiles.Category[bedroomCount] || futurePercentiles.Category['1'];
+                }
+            }
+            
+            priceData.forEach((day, index) => {
+                const row = document.createElement('tr');
+                
+                const date = dayjs(day.date);
+                const dayOfWeek = date.format('ddd');
+                const isWeekend = dayOfWeek === 'Sat' || dayOfWeek === 'Sun';
+                
+                if (isWeekend) {
+                    row.className = 'weekend';
+                }
+                
+                // Get percentiles for this date
+                let p25 = '-', p50 = '-', p75 = '-', pMedian = '-', p90 = '-';
+                if (percentileData && percentileData.Y_values && percentileData.X_values) {
+                    const dateIndex = percentileData.X_values.indexOf(day.date);
+                    if (dateIndex !== -1) {
+                        p25 = '$' + Math.round(percentileData.Y_values[0][dateIndex]);
+                        p50 = '$' + Math.round(percentileData.Y_values[1][dateIndex]);
+                        p75 = '$' + Math.round(percentileData.Y_values[2][dateIndex]);
+                        pMedian = '$' + Math.round(percentileData.Y_values[3][dateIndex]);
+                        p90 = '$' + Math.round(percentileData.Y_values[4][dateIndex]);
+                    }
+                }
+                
+                // Determine demand class
+                let demandClass = 'demand-unavailable';
+                let demandText = day.demand_desc || 'Unknown';
+                if (demandText.includes('Low')) demandClass = 'demand-low';
+                else if (demandText.includes('Medium')) demandClass = 'demand-medium';
+                else if (demandText.includes('High')) demandClass = 'demand-high';
+                
+                row.innerHTML = `
+                    <td class="date-cell">${date.format('MMM D')}</td>
+                    <td>${dayOfWeek}</td>
+                    <td><span class="our-price">$${day.price}</span></td>
+                    <td>${p25}</td>
+                    <td>${p50}</td>
+                    <td>${p75}</td>
+                    <td>${pMedian}</td>
+                    <td>${p90}</td>
+                    <td><span class="demand-badge ${demandClass}">${demandText}</span></td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Get Listing Prices - PriceLabs Visualizer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/date-fns@2.29.3/index.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .header-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .timestamp {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        .summary-stats {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            background: #f1f5f9;
+            color: #475569;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .stat-badge.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .stat-badge.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Main Layout */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 24px;
+            min-height: 600px;
+        }
+
+        /* Left Column - Listings */
+        .listings-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .listings-panel h2 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #0f172a;
+        }
+
+        .listing-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .listing-card:hover {
+            border-color: #2563eb;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.1);
+        }
+
+        .listing-card.selected {
+            border-color: #2563eb;
+            background: #eff6ff;
+        }
+
+        .listing-card.error {
+            border-color: #dc2626;
+            background: #fef2f2;
+        }
+
+        .listing-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .listing-id {
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .pms-badge {
+            background: #2563eb;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .listing-status {
+            margin-bottom: 8px;
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.success {
+            background: #16a34a;
+        }
+
+        .status-dot.error {
+            background: #dc2626;
+        }
+
+        .error-details {
+            background: #fee2e2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 8px;
+        }
+
+        .error-message {
+            color: #991b1b;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .error-status-badge {
+            background: #dc2626;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .error-status-badge.warning {
+            background: #ea580c;
+        }
+
+        .error-status-badge.info {
+            background: #0891b2;
+        }
+
+        .listing-stats {
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        /* Right Column - Details */
+        .details-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .empty-state p {
+            font-size: 14px;
+        }
+
+        .error-state {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .error-state-icon {
+            font-size: 48px;
+            color: #dc2626;
+            margin-bottom: 16px;
+        }
+
+        .error-state h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #991b1b;
+            margin-bottom: 8px;
+        }
+
+        .error-state p {
+            color: #991b1b;
+            margin-bottom: 16px;
+        }
+
+        .error-explanation {
+            background: white;
+            border-radius: 6px;
+            padding: 16px;
+            text-align: left;
+            margin-top: 16px;
+        }
+
+        .error-explanation h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 8px;
+        }
+
+        .error-explanation ul {
+            list-style: disc;
+            margin-left: 20px;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        .error-explanation li {
+            margin-bottom: 4px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-layout {
+                grid-template-columns: 300px 1fr;
+                gap: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+
+            .main-layout {
+                grid-template-columns: 1fr;
+                gap: 16px;
+            }
+
+            .header-meta {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .summary-stats {
+                width: 100%;
+            }
+        }
+
+        /* Loading State */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: #64748b;
+        }
+
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 12px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Price Display */
+        .price-display {
+            font-size: 24px;
+            font-weight: bold;
+            color: #0f172a;
+            margin: 16px 0;
+        }
+
+        .currency-symbol {
+            color: #64748b;
+            font-size: 18px;
+        }
+
+        /* Interactive Elements */
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .btn:hover {
+            background: #1d4ed8;
+        }
+
+        .btn.secondary {
+            background: #64748b;
+        }
+
+        .btn.secondary:hover {
+            background: #475569;
+        }
+
+        /* Utility Classes */
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        .text-right { text-align: right; }
+        .mb-2 { margin-bottom: 8px; }
+        .mb-4 { margin-bottom: 16px; }
+        .mt-4 { margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>Get Listing Prices Results</h1>
+            <div class="header-meta">
+                <div class="timestamp" id="timestamp">Generated: Loading...</div>
+                <div class="summary-stats" id="summary-stats">
+                    <div class="stat-badge">Total: <span id="total-count">0</span></div>
+                    <div class="stat-badge success">Success: <span id="success-count">0</span></div>
+                    <div class="stat-badge error">Errors: <span id="error-count">0</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Layout -->
+        <div class="main-layout">
+            <!-- Left Column - Listings -->
+            <div class="listings-panel">
+                <h2>Listings</h2>
+                <div id="listings-container">
+                    <div class="loading">
+                        <div class="loading-spinner"></div>
+                        Loading listings...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column - Details -->
+            <div class="details-panel">
+                <div id="details-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📊</div>
+                        <h3>Select a Listing</h3>
+                        <p>Choose a listing from the left panel to view detailed pricing information and analytics.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Embedded API Response Data
+        const apiResponseData = [
+            {
+                "id": "634197676956646902",
+                "pms": "airbnb",
+                "error": "Listing sync is not toggled ON in PriceLabs",
+                "error_status": "LISTING_TOGGLE_OFF"
+            }
+        ];
+
+        // Global state
+        let selectedListingIndex = null;
+        let listings = [];
+
+        // Error status configurations
+        const errorStatusConfig = {
+            'LISTING_TOGGLE_OFF': {
+                type: 'warning',
+                title: 'Listing Sync Disabled',
+                explanation: [
+                    'The listing sync feature is currently disabled in PriceLabs',
+                    'Enable sync in your PriceLabs dashboard to get pricing data',
+                    'Check your listing settings under Sync Configuration'
+                ]
+            },
+            'LISTING_NOT_PRESENT': {
+                type: 'error',
+                title: 'Listing Not Found',
+                explanation: [
+                    'This listing ID was not found in your PriceLabs account',
+                    'Verify the listing ID is correct',
+                    'Ensure the listing is properly connected to PriceLabs'
+                ]
+            },
+            'LISTING_NO_DATA': {
+                type: 'info',
+                title: 'No Pricing Data Available',
+                explanation: [
+                    'No pricing data is currently available for this listing',
+                    'This may be due to recent setup or data processing delays',
+                    'Try refreshing the data or check back later'
+                ]
+            }
+        };
+
+        // Initialize the application
+        function init() {
+            loadData();
+        }
+
+        // Load and process data
+        function loadData() {
+            listings = apiResponseData;
+            updateSummaryStats();
+            renderListings();
+            updateTimestamp();
+        }
+
+        // Update summary statistics
+        function updateSummaryStats() {
+            const total = listings.length;
+            const errors = listings.filter(listing => listing.error).length;
+            const success = total - errors;
+
+            document.getElementById('total-count').textContent = total;
+            document.getElementById('success-count').textContent = success;
+            document.getElementById('error-count').textContent = errors;
+        }
+
+        // Update timestamp
+        function updateTimestamp() {
+            const now = new Date().toISOString();
+            document.getElementById('timestamp').textContent = `Generated: ${now}`;
+        }
+
+        // Render listings in left panel
+        function renderListings() {
+            const container = document.getElementById('listings-container');
+            
+            if (listings.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>No Data</h3>
+                        <p>No listing data available to display.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = listings.map((listing, index) => {
+                const isError = !!listing.error;
+                const errorConfig = isError ? errorStatusConfig[listing.error_status] || errorStatusConfig['LISTING_NOT_PRESENT'] : null;
+                
+                return `
+                    <div class="listing-card ${isError ? 'error' : ''}" onclick="selectListing(${index})">
+                        <div class="listing-header">
+                            <div class="listing-id">${listing.id}</div>
+                            <div class="pms-badge">${listing.pms}</div>
+                        </div>
+                        
+                        <div class="listing-status">
+                            <div class="status-indicator">
+                                <div class="status-dot ${isError ? 'error' : 'success'}"></div>
+                                ${isError ? 'Error' : 'Success'}
+                            </div>
+                        </div>
+
+                        ${isError ? `
+                            <div class="error-details">
+                                <div class="error-message">${listing.error}</div>
+                                <div class="error-status-badge ${errorConfig.type}">${listing.error_status}</div>
+                            </div>
+                        ` : `
+                            <div class="listing-stats">
+                                <div>Currency: ${listing.currency || 'USD'}</div>
+                                <div>Last refreshed: ${formatTimestamp(listing.last_refreshed_at)}</div>
+                            </div>
+                        `}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Select a listing for detailed view
+        function selectListing(index) {
+            selectedListingIndex = index;
+            
+            // Update visual selection
+            document.querySelectorAll('.listing-card').forEach((card, i) => {
+                card.classList.toggle('selected', i === index);
+            });
+
+            // Render details
+            renderListingDetails(listings[index]);
+        }
+
+        // Render detailed view for selected listing
+        function renderListingDetails(listing) {
+            const container = document.getElementById('details-container');
+            
+            if (listing.error) {
+                renderErrorDetails(container, listing);
+            } else {
+                renderSuccessDetails(container, listing);
+            }
+        }
+
+        // Render error state details
+        function renderErrorDetails(container, listing) {
+            const errorConfig = errorStatusConfig[listing.error_status] || errorStatusConfig['LISTING_NOT_PRESENT'];
+            
+            container.innerHTML = `
+                <div class="error-state">
+                    <div class="error-state-icon">⚠️</div>
+                    <h3>${errorConfig.title}</h3>
+                    <p>${listing.error}</p>
+                    <div class="error-status-badge ${errorConfig.type}">${listing.error_status}</div>
+                    
+                    <div class="error-explanation">
+                        <h4>What this means:</h4>
+                        <ul>
+                            ${errorConfig.explanation.map(item => `<li>${item}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render success state details (placeholder for future successful responses)
+        function renderSuccessDetails(container, listing) {
+            container.innerHTML = `
+                <div style="padding: 40px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📈</div>
+                    <h3>Pricing Data Available</h3>
+                    <p style="margin: 16px 0;">This listing has successful pricing data.</p>
+                    <div class="price-display">
+                        <span class="currency-symbol">${listing.currency || 'USD'}</span>
+                        Pricing details would be displayed here
+                    </div>
+                    <p style="color: #64748b; font-size: 14px;">
+                        Last refreshed: ${formatTimestamp(listing.last_refreshed_at)}
+                    </p>
+                    <button class="btn mt-4">View Detailed Charts</button>
+                </div>
+            `;
+        }
+
+        // Utility function to format timestamps
+        function formatTimestamp(timestamp) {
+            if (!timestamp) return 'Never';
+            
+            try {
+                const date = new Date(timestamp);
+                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            } catch (e) {
+                return 'Invalid date';
+            }
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+
+        // Handle responsive behavior
+        window.addEventListener('resize', () => {
+            // Handle any responsive adjustments if needed
+        });
+    </script>
+</body>
+</html>

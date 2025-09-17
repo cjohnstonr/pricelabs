@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Listing Overrides - API Response Visualizer</title>
+    <style>
+        :root {
+            /* Success States */
+            --success-primary: #10B981;
+            --success-bg: #ECFDF5;
+            --success-border: #A7F3D0;
+            
+            /* Error States */
+            --error-primary: #EF4444;
+            --error-bg: #FEF2F2;
+            --error-border: #FECACA;
+            
+            /* Warning States */
+            --warning-primary: #F59E0B;
+            --warning-bg: #FFFBEB;
+            --warning-border: #FDE68A;
+            
+            /* Info States */
+            --info-primary: #3B82F6;
+            --info-bg: #EFF6FF;
+            --info-border: #BFDBFE;
+            
+            /* Neutral */
+            --neutral-primary: #6B7280;
+            --neutral-bg: #F9FAFB;
+            --neutral-border: #E5E7EB;
+            
+            /* Typography */
+            --font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #374151;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%);
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .content {
+            padding: 32px 24px;
+        }
+
+        .delete-override-response {
+            text-align: center;
+        }
+
+        .status-indicator {
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            margin-bottom: 16px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .status-badge.success {
+            background: var(--success-bg);
+            border: 4px solid var(--success-border);
+            color: var(--success-primary);
+        }
+
+        .status-badge.error {
+            background: var(--error-bg);
+            border: 4px solid var(--error-border);
+            color: var(--error-primary);
+        }
+
+        .status-badge.warning {
+            background: var(--warning-bg);
+            border: 4px solid var(--warning-border);
+            color: var(--warning-primary);
+        }
+
+        .status-badge.loading {
+            background: var(--info-bg);
+            border: 4px solid var(--info-border);
+            color: var(--info-primary);
+        }
+
+        .status-icon {
+            font-size: 48px;
+            line-height: 1;
+        }
+
+        .status-text {
+            font-size: 24px;
+            font-weight: 700;
+            text-transform: capitalize;
+            margin-top: 8px;
+            color: inherit;
+        }
+
+        .message-card {
+            background: var(--neutral-bg);
+            border: 2px solid var(--neutral-border);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+            transition: all 0.3s ease;
+        }
+
+        .message-card:hover {
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+
+        .message-text {
+            font-size: 18px;
+            line-height: 1.6;
+            color: #374151;
+            margin: 0;
+        }
+
+        .metadata {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 16px;
+            background: #F8FAFC;
+            border-radius: 8px;
+            font-size: 14px;
+            color: var(--neutral-primary);
+        }
+
+        .timestamp {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .response-time {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+        }
+
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 44px;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary {
+            background: #4F46E5;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #4338CA;
+        }
+
+        .btn-secondary {
+            background: var(--neutral-bg);
+            color: var(--neutral-primary);
+            border: 2px solid var(--neutral-border);
+        }
+
+        .btn-secondary:hover {
+            background: #F3F4F6;
+        }
+
+        .btn-success {
+            background: var(--success-primary);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-danger {
+            background: var(--error-primary);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+        }
+
+        .raw-json {
+            margin-top: 24px;
+            padding: 16px;
+            background: #1F2937;
+            color: #F9FAFB;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+            display: none;
+        }
+
+        .raw-json.show {
+            display: block;
+        }
+
+        /* Animations */
+        @keyframes checkmark {
+            0% {
+                transform: scale(0) rotate(45deg);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.2) rotate(45deg);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1) rotate(45deg);
+                opacity: 1;
+            }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .animate-checkmark {
+            animation: checkmark 0.6s ease-in-out;
+        }
+
+        .animate-shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--info-border);
+            border-top: 4px solid var(--info-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+
+            .container {
+                border-radius: 12px;
+            }
+
+            .header {
+                padding: 20px 16px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .content {
+                padding: 24px 16px;
+            }
+
+            .status-badge {
+                width: 100px;
+                height: 100px;
+            }
+
+            .status-icon {
+                font-size: 40px;
+            }
+
+            .status-text {
+                font-size: 20px;
+            }
+
+            .message-text {
+                font-size: 16px;
+            }
+
+            .actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+        }
+
+        /* Accessibility */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        .btn:focus {
+            outline: 2px solid #4F46E5;
+            outline-offset: 2px;
+        }
+
+        /* Toast notifications */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success-primary);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.error {
+            background: var(--error-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Delete Listing Overrides</h1>
+            <p>API Response Visualizer</p>
+        </div>
+
+        <div class="content">
+            <div class="delete-override-response">
+                <div class="status-indicator">
+                    <div class="status-badge success" id="statusBadge" role="status" aria-live="polite">
+                        <div class="status-icon" id="statusIcon">✓</div>
+                    </div>
+                    <div class="status-text" id="statusText">Success</div>
+                </div>
+
+                <div class="message-card">
+                    <p class="message-text" id="messageText">Operation completed successfully</p>
+                </div>
+
+                <div class="metadata">
+                    <div class="timestamp">
+                        <span>🕒</span>
+                        <span id="timestamp">2025-09-16T15:32:38.384731</span>
+                    </div>
+                    <div class="response-time">
+                        <span>⚡</span>
+                        <span id="responseTime">245ms</span>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button class="btn btn-primary" onclick="copyResponse()" aria-label="Copy response JSON">
+                        📋 Copy JSON
+                    </button>
+                    <button class="btn btn-secondary" onclick="copyMessage()" aria-label="Copy message text">
+                        💬 Copy Message
+                    </button>
+                    <button class="btn btn-secondary" onclick="toggleRawJson()" aria-label="Toggle raw JSON display">
+                        🔍 View Raw
+                    </button>
+                    <button class="btn btn-success" onclick="simulateSuccess()" aria-label="Simulate success response">
+                        ✅ Test Success
+                    </button>
+                    <button class="btn btn-danger" onclick="simulateError()" aria-label="Simulate error response">
+                        ❌ Test Error
+                    </button>
+                </div>
+
+                <div class="raw-json" id="rawJson"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample API response data
+        const sampleResponses = {
+            success: {
+                status: "success",
+                message: "Operation completed successfully"
+            },
+            error: {
+                status: "error",
+                message: "Failed to delete listing overrides. Please check your permissions and try again."
+            },
+            warning: {
+                status: "warning",
+                message: "Some overrides could not be deleted. Operation partially completed."
+            },
+            timeout: {
+                status: "error",
+                message: "Request timed out. Please check your connection and try again."
+            }
+        };
+
+        let currentResponse = sampleResponses.success;
+        
+        // DOM elements
+        const statusBadge = document.getElementById('statusBadge');
+        const statusIcon = document.getElementById('statusIcon');
+        const statusText = document.getElementById('statusText');
+        const messageText = document.getElementById('messageText');
+        const rawJson = document.getElementById('rawJson');
+        const timestamp = document.getElementById('timestamp');
+        const responseTime = document.getElementById('responseTime');
+
+        // Icon mappings
+        const statusIcons = {
+            success: '✓',
+            error: '✗',
+            warning: '⚠',
+            loading: ''
+        };
+
+        // Initialize the display
+        function updateDisplay(response) {
+            currentResponse = response;
+            const status = response.status || 'unknown';
+            const message = response.message || 'No message provided';
+            
+            // Update status badge
+            statusBadge.className = `status-badge ${status}`;
+            statusText.textContent = status.charAt(0).toUpperCase() + status.slice(1);
+            
+            // Update icon based on status
+            if (status === 'loading') {
+                statusIcon.innerHTML = '<div class="loading-spinner"></div>';
+            } else {
+                statusIcon.textContent = statusIcons[status] || '?';
+                if (status === 'success') {
+                    statusIcon.classList.add('animate-checkmark');
+                } else if (status === 'error') {
+                    statusBadge.classList.add('animate-shake');
+                }
+            }
+            
+            // Update message
+            messageText.textContent = message;
+            
+            // Update metadata
+            timestamp.textContent = new Date().toISOString();
+            responseTime.textContent = `${Math.floor(Math.random() * 500 + 50)}ms`;
+            
+            // Update raw JSON
+            rawJson.textContent = JSON.stringify(response, null, 2);
+            
+            // Clear animations after they complete
+            setTimeout(() => {
+                statusIcon.classList.remove('animate-checkmark');
+                statusBadge.classList.remove('animate-shake');
+            }, 600);
+        }
+
+        // Copy functions
+        function copyResponse() {
+            const jsonText = JSON.stringify(currentResponse, null, 2);
+            navigator.clipboard.writeText(jsonText).then(() => {
+                showToast('Response JSON copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy to clipboard', 'error');
+            });
+        }
+
+        function copyMessage() {
+            navigator.clipboard.writeText(currentResponse.message || '').then(() => {
+                showToast('Message copied to clipboard!');
+            }).catch(() => {
+                showToast('Failed to copy to clipboard', 'error');
+            });
+        }
+
+        // Toggle raw JSON display
+        function toggleRawJson() {
+            const isVisible = rawJson.classList.contains('show');
+            if (isVisible) {
+                rawJson.classList.remove('show');
+            } else {
+                rawJson.classList.add('show');
+            }
+        }
+
+        // Simulation functions
+        function simulateSuccess() {
+            updateDisplay(sampleResponses.success);
+        }
+
+        function simulateError() {
+            updateDisplay(sampleResponses.error);
+        }
+
+        function simulateWarning() {
+            updateDisplay(sampleResponses.warning);
+        }
+
+        function simulateLoading() {
+            updateDisplay({
+                status: 'loading',
+                message: 'Deleting listing overrides...'
+            });
+            
+            // Simulate completion after 2 seconds
+            setTimeout(() => {
+                const outcomes = [sampleResponses.success, sampleResponses.error, sampleResponses.warning];
+                const randomOutcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+                updateDisplay(randomOutcome);
+            }, 2000);
+        }
+
+        // Toast notification function
+        function showToast(message, type = 'success') {
+            // Remove existing toast if any
+            const existingToast = document.querySelector('.toast');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            
+            document.body.appendChild(toast);
+            
+            // Show toast
+            setTimeout(() => toast.classList.add('show'), 100);
+            
+            // Hide and remove toast after 3 seconds
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                rawJson.classList.remove('show');
+            }
+            
+            // Quick test shortcuts
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        simulateSuccess();
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        simulateError();
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        simulateWarning();
+                        break;
+                    case 'c':
+                        e.preventDefault();
+                        copyResponse();
+                        break;
+                }
+            }
+        });
+
+        // Initialize with success response
+        document.addEventListener('DOMContentLoaded', () => {
+            updateDisplay(currentResponse);
+            
+            // Show keyboard shortcuts hint
+            setTimeout(() => {
+                showToast('Tip: Use Ctrl+1/2/3 for quick tests, Ctrl+C to copy!');
+            }, 1000);
+        });
+
+        // Handle potential real API integration
+        function handleApiResponse(response) {
+            try {
+                if (typeof response === 'string') {
+                    response = JSON.parse(response);
+                }
+                updateDisplay(response);
+            } catch (error) {
+                updateDisplay({
+                    status: 'error',
+                    message: 'Invalid response format: ' + error.message
+                });
+            }
+        }
+
+        // Expose functions for external use
+        window.DeleteOverrideVisualizer = {
+            updateDisplay,
+            handleApiResponse,
+            simulateSuccess,
+            simulateError,
+            simulateWarning,
+            simulateLoading
+        };
+    </script>
+</body>
+</html>

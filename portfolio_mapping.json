@@ -1,0 +1,817 @@
+{
+  "last_refresh": "2025-09-16T15:37:08.292625",
+  "portfolios": {
+    "utah": {
+      "name": "Utah Portfolio",
+      "description": "Utah properties",
+      "listing_count": 7,
+      "listings": [
+        {
+          "id": "778970695842047200",
+          "name": "The Trippy Hippie 8) *Ideal Location*",
+          "pms": "airbnb",
+          "city": "North Salt Lake",
+          "state": "Utah",
+          "bedrooms": 2
+        },
+        {
+          "id": "1054021548959229564",
+          "name": "",
+          "pms": "airbnb",
+          "city": null,
+          "state": null,
+          "bedrooms": null
+        },
+        {
+          "id": "1054021555534272575",
+          "name": "",
+          "pms": "airbnb",
+          "city": null,
+          "state": null,
+          "bedrooms": null
+        },
+        {
+          "id": "1334983371248969952",
+          "name": "*~The Zen Den in Eden~*",
+          "pms": "airbnb",
+          "city": "Eden",
+          "state": "Utah",
+          "bedrooms": 4
+        },
+        {
+          "id": "_units_0004_23ee52ea-2d6f-4e84-bfe8-6e5726941e78",
+          "name": "Vrbo Property \u00b7 ",
+          "pms": "vrbo",
+          "city": "Eden",
+          "state": "Utah",
+          "bedrooms": 4
+        },
+        {
+          "id": "_units_0004_08e3bf1f-a9e0-4543-90fe-48530be7d052",
+          "name": "The Zen Den \u00b7 ",
+          "pms": "vrbo",
+          "city": "North Salt Lake",
+          "state": "Utah",
+          "bedrooms": 5
+        },
+        {
+          "id": "_units_0004_98bd658a-e3b4-46ea-b7f9-708e8f63c496",
+          "name": "Creekside Cabin: Redlight, Yoga Studio, Sauna, & Cold Plunge; 10-min to skiing \u00b7  (4389186)",
+          "pms": "vrbo",
+          "city": "Eden",
+          "state": "Utah",
+          "bedrooms": 5
+        }
+      ]
+    },
+    "california": {
+      "name": "California Portfolio",
+      "description": "California properties",
+      "listing_count": 10,
+      "listings": [
+        {
+          "id": "594916055183145235",
+          "name": "European Cottage in Alps of Southern California",
+          "pms": "airbnb",
+          "city": "Twin Peaks",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "107960",
+          "name": "Mt. Helix Cottage - European style in San Diego -- Mt. Helix and Vine Cottage Guest Suite - European Styled Location in San Diego",
+          "pms": "hostaway",
+          "city": "La Mesa",
+          "state": "California",
+          "bedrooms": 1
+        },
+        {
+          "id": "107961",
+          "name": "Cedar Snow Cottage in Alps of Lake Arrowhead",
+          "pms": "hostaway",
+          "city": "Twin Peaks",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "_units_0004_80969d7f-bd21-45bd-bf8b-cf61e168b2eb",
+          "name": "Cedar Snow Cottage in Alps of Lake Arrowhead \u00b7  (2349656)",
+          "pms": "vrbo",
+          "city": "Twin Peaks",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "626685386106102180",
+          "name": "Star Gazing Dream A Frame, Nature + Family Time",
+          "pms": "airbnb",
+          "city": "Palomar Mountain",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "119491",
+          "name": "Star Gazing Dream A Frame, Nature + Family Time",
+          "pms": "hostaway",
+          "city": "Palomar Mountain",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "_units_0004_5ac15c94-1eef-44f2-81d0-6d710c19b78f",
+          "name": "Star Gazing Dream A Frame, Nature + Family Time \u00b7  (2958319)",
+          "pms": "vrbo",
+          "city": null,
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "44170585",
+          "name": "Mt. Helix French Country Cottage - Guest Suite",
+          "pms": "airbnb",
+          "city": "La Mesa",
+          "state": "California",
+          "bedrooms": 0
+        },
+        {
+          "id": "832552113581190562",
+          "name": "Palm Royale- Live like Hollywood",
+          "pms": "airbnb",
+          "city": "Palm Springs",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "_units_0004_3a965463-ed5a-4082-b7dc-9fc6b21d1ac5",
+          "name": "Palm Royale- Live like Hollywood \u00b7 ",
+          "pms": "vrbo",
+          "city": "Palm Springs",
+          "state": "California",
+          "bedrooms": 4
+        }
+      ]
+    },
+    "default": {
+      "name": "Main Portfolio",
+      "description": "Main/default portfolio",
+      "listing_count": 79,
+      "listings": [
+        {
+          "id": "634197676956646902",
+          "name": "PAG12161 \u00b7 Mountaintop Estate: Pool-Hot Tub-Theatre-Tiki Bar",
+          "pms": "airbnb",
+          "city": "Lakeside",
+          "state": "California",
+          "bedrooms": 5
+        },
+        {
+          "id": "750684369623859183",
+          "name": "Felton 1b (#2) \u00b7 Charming 1b/1b with Full Kitchen and outdoor Patio",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 1
+        },
+        {
+          "id": "862371806629437889",
+          "name": "Santa Clara \u00b7 Steps from beach, Newly Renovated!",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "_units_0004_ab461356-270a-4e48-995e-f7a2c02bda02",
+          "name": "Steps from Beach Newly renovated! \u00b7  --- Steps from Beach Newly renovated! (3340667)",
+          "pms": "vrbo",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "790483527608246945",
+          "name": "GIL3280 \u00b7 7Beds, 3Bedrms, central location",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "980472101582945115",
+          "name": "MOU4840 \u00b7 Mt Helix paradise",
+          "pms": "airbnb",
+          "city": "La Mesa",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "993536131184720077",
+          "name": "VER2369 \u00b7 Tropical Resort 7 Bed 4 Acres",
+          "pms": "airbnb",
+          "city": "Fallbrook",
+          "state": "California",
+          "bedrooms": 7
+        },
+        {
+          "id": "_units_0004_04c2a502-91ac-41ed-8708-b1c44f582cbc",
+          "name": "Steps from beach, Newly Renovated! \u00b7  (3767644)",
+          "pms": "vrbo",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": null
+        },
+        {
+          "id": "4305303",
+          "name": "Chic 1BR in Trendy Walkable South Park",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 1
+        },
+        {
+          "id": "1247851918910071146",
+          "name": "ANG4730 \u00b7 Angels Pt Estate, Pool, Arcade, 8 Beds, Ocean View",
+          "pms": "airbnb",
+          "city": "La Mesa",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "1263218880571820958",
+          "name": "FEL4443 \u00b7 3Bed, Hot Tub, Movie, Bikes, 2 Blocks to Adams Ave",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "1274097413526225985",
+          "name": "Madison \u00b7 Hilltop Haven with Infinity Pool",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "42477590",
+          "name": "Yosemite Gate Escape \u00b7 Yosemite Nature Escape -Hot Tub-Firepit -Game Room",
+          "pms": "airbnb",
+          "city": "Oakhurst",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "50758913",
+          "name": "River's Edge \u00b7 The River's Edge Resort",
+          "pms": "airbnb",
+          "city": "Oakhurst",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "43491131",
+          "name": "Lilas Ocean Beach Villa \u00b7 Lilas Ocean Beach Villa",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 5
+        },
+        {
+          "id": "561672634207823708",
+          "name": "Yuma Foothills Bungalows and RV lot \u00b7 Yuma Foothills Bungalows and RV lot",
+          "pms": "airbnb",
+          "city": "Yuma",
+          "state": "Arizona",
+          "bedrooms": 2
+        },
+        {
+          "id": "1295825191040206597",
+          "name": "AER28942 \u00b7 Wine Country Paradise",
+          "pms": "airbnb",
+          "city": "Valley Center",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "1308110709729021516",
+          "name": "PAL52 \u00b7 Palomania - 4bedroom, games, and pool",
+          "pms": "airbnb",
+          "city": "Chula Vista",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "1334941439398499906",
+          "name": "STR4516 \u00b7 North Park 5 Beds Rooftop Cinema & Activities",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "_units_0004_0f7877eb-a3de-4527-9257-c9ce696a85bb",
+          "name": "Chic 1BR Trendy Walkable SPark \u00b7  (2873268)",
+          "pms": "vrbo",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 1
+        },
+        {
+          "id": "1110059336877940917",
+          "name": "12821_avenida \u00b7 San Diego Oasis, Pool, Yard & Sleeps 10!",
+          "pms": "airbnb",
+          "city": "Poway",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "1403111792518392312",
+          "name": "4510_33rd \u00b7 North Park Funk a 3 bedroom",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "47102936",
+          "name": "White House \u00b7 Modern Yosemite Escape  Cozy + Nature Views + EV",
+          "pms": "airbnb",
+          "city": "Oakhurst",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "1190201193782286545",
+          "name": "LOS PINOS  \u00b7 Spacious Yosemite Lodge  Arcades + EV Charger",
+          "pms": "airbnb",
+          "city": "Oakhurst",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "1424196089876804375",
+          "name": "3330_brooke_2 \u00b7 5BR Hilltop Retreat in Wine & Wedding country",
+          "pms": "airbnb",
+          "city": "Fallbrook",
+          "state": "California",
+          "bedrooms": 5
+        },
+        {
+          "id": "1425672293256602325",
+          "name": "4526_haines \u00b7 Pacific Beach Coastal Hideaway",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 1
+        },
+        {
+          "id": "1298199926415619201",
+          "name": "310_camino \u00b7 San Diego Resort. Pool, Views, and Outdoor Living",
+          "pms": "airbnb",
+          "city": "Bonita",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "1431383020594201637",
+          "name": "GASKILL / Alpine \u00b7 Alpine Getaway- Pool Casino & Forest Hiking Access",
+          "pms": "airbnb",
+          "city": "Alpine",
+          "state": "California",
+          "bedrooms": 5
+        },
+        {
+          "id": "1456014624045414444",
+          "name": "PAG12161_2 \u00b7 Mountaintop Estate: Pool-Hot Tub-Theatre-Tiki Bar",
+          "pms": "airbnb",
+          "city": "Lakeside",
+          "state": "California",
+          "bedrooms": 5
+        },
+        {
+          "id": "_units_0004_e41bf277-8a78-4a04-96b8-51e647440899",
+          "name": "STR4516 \u00b7  (4464295)",
+          "pms": "vrbo",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": null
+        },
+        {
+          "id": "_units_0004_741d7c24-64bd-4ad1-8bdb-dd4af63ff48b",
+          "name": "PAG12161 \u00b7  (4540785)",
+          "pms": "vrbo",
+          "city": "Lakeside",
+          "state": "California",
+          "bedrooms": null
+        },
+        {
+          "id": "_units_0004_88221d8e-d564-48d3-9df9-c8be20e70a81",
+          "name": "MAD702 \u00b7  (4464292)",
+          "pms": "vrbo",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": null
+        },
+        {
+          "id": "_units_0004_be73fd6a-2613-4265-9115-b53b2bdd5e14",
+          "name": "SAN730 \u00b7  (4550674)",
+          "pms": "vrbo",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": null
+        },
+        {
+          "id": "_units_0004_601e2c2e-cedc-4079-ae64-1ab293640dea",
+          "name": "FEL4443 \u00b7  (4464294)",
+          "pms": "vrbo",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": null
+        },
+        {
+          "id": "_units_0004_9b5686db-9443-4bdc-94d9-c2926d40795c",
+          "name": "PAL52 \u00b7  (4464299)",
+          "pms": "vrbo",
+          "city": "Chula Vista",
+          "state": "California",
+          "bedrooms": null
+        },
+        {
+          "id": "_units_0004_24090d26-0b72-4c90-b88a-0d6fe650101b",
+          "name": "FEL4445 \u00b7 ",
+          "pms": "vrbo",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": null
+        },
+        {
+          "id": "_units_0004_5dd4e70b-aca6-429e-a791-f8f0dd2047e7",
+          "name": "AER28942 \u00b7  (4464304)",
+          "pms": "vrbo",
+          "city": "Valley Center",
+          "state": "California",
+          "bedrooms": null
+        },
+        {
+          "id": "6747d4428bac1f0012fdc94d",
+          "name": "PAG12161 -- Mountaintop Estate: Pool-Hot Tub-Theatre-Tiki Bar",
+          "pms": "guesty",
+          "city": "Lakeside",
+          "state": "California",
+          "bedrooms": 5
+        },
+        {
+          "id": "6747d44ebf5af300124a128a",
+          "name": "MOU4840 -- Mt Helix paradise",
+          "pms": "guesty",
+          "city": "La Mesa",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "6747d45618e2320011a7d7b1",
+          "name": "VER2369 -- Tropical Resort 7 Bed 4 Acres",
+          "pms": "guesty",
+          "city": "Fallbrook",
+          "state": "California",
+          "bedrooms": 7
+        },
+        {
+          "id": "6747d45f476e38001134a27f",
+          "name": "FEL4443 -- 3Bed, Hot Tub, Movie, Bikes, 2 Blocks to Adams Ave",
+          "pms": "guesty",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "676dc2687292010012976878",
+          "name": "AER28942 -- Wine Country Paradise",
+          "pms": "guesty",
+          "city": "Valley Center",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "676dc27342b76e0011ee3190",
+          "name": "VIA8245 -- San Diego/Wine Country Resort",
+          "pms": "guesty",
+          "city": "Bonsall",
+          "state": "California",
+          "bedrooms": 7
+        },
+        {
+          "id": "676f020e37231f0010ed51f2",
+          "name": "FEL4445 -- Charming 1b/1b with Full Kitchen and outdoor Patio",
+          "pms": "guesty",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 1
+        },
+        {
+          "id": "676f0591f7791e0011fc8e91",
+          "name": "MAD702 -- Hilltop Haven with Infinity Pool",
+          "pms": "guesty",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "676f07275044ed00108cf13d",
+          "name": "GIL3280 -- 7Beds, 3Bedrms, central location",
+          "pms": "guesty",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "677ef524a3c9d90012f681b6",
+          "name": "SAN730 -- Steps from beach, Newly Renovated!",
+          "pms": "guesty",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "6780404ca20e110011e79133",
+          "name": "TEN825 -- Spacious Downtown Rowhome - Holiday or Business",
+          "pms": "guesty",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 2
+        },
+        {
+          "id": "67804e0835f470001388a988",
+          "name": "ANG4730 -- Angels Pt Estate, Pool, Arcade, 8 Beds, Ocean View",
+          "pms": "guesty",
+          "city": "La Mesa",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "6790487d0320ab00100ae03c",
+          "name": "PAL52 -- Palomania - 4bedroom, games, and pool",
+          "pms": "guesty",
+          "city": "Chula Vista",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "6790488fece18500129fc715",
+          "name": "STR4516 -- North Park 5 Beds Rooftop Cinema &amp; Activities",
+          "pms": "guesty",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "67d9f8832f6d75002f6ee7dc",
+          "name": "4325_citrus -- Sky Ridge: Indoor Pool, Privacy, Wine Country",
+          "pms": "guesty",
+          "city": "Fallbrook",
+          "state": "California",
+          "bedrooms": 5
+        },
+        {
+          "id": "67d9f89718e34f00211cf470",
+          "name": "4510_33rd -- North Park Funk a 3 bedroom",
+          "pms": "guesty",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "67dc7127b9004f0012fe95ea",
+          "name": "12821_avenida -- San Diego Oasis, Pool, Yard &amp; Sleeps 10!",
+          "pms": "guesty",
+          "city": "Poway",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "68225391412941001132c820",
+          "name": "4325_citrus_2 -- Sky Ridge: Indoor Pool, Privacy, Wine Country",
+          "pms": "guesty",
+          "city": "Fallbrook",
+          "state": "California",
+          "bedrooms": 5
+        },
+        {
+          "id": "6828fb93059399001339d52c",
+          "name": "3330_brooke_2 -- 5 bedroom hilltop retreat",
+          "pms": "guesty",
+          "city": "Fallbrook",
+          "state": "California",
+          "bedrooms": 5
+        },
+        {
+          "id": "682f7948e202ff00136d8b84",
+          "name": "4526_haines -- Coastal Hideaway",
+          "pms": "guesty",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 1
+        },
+        {
+          "id": "683e1e8d73644a0011af71da",
+          "name": "310_camino -- San Diego Resort. Pool, Views, and Outdoor Living",
+          "pms": "guesty",
+          "city": "Bonita",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "68508adfa209c60011e95c0a",
+          "name": "GASKILL / Alpine -- Alpine Getaway- Pool Casino &amp; Forest Hiking Access",
+          "pms": "guesty",
+          "city": "Alpine",
+          "state": "California",
+          "bedrooms": 5
+        },
+        {
+          "id": "6864594ae1163300102afdce",
+          "name": "PAG12161_2 -- Mountaintop Estate: Pool-Hot Tub-Theatre-Tiki Bar",
+          "pms": "guesty",
+          "city": "Lakeside",
+          "state": "California",
+          "bedrooms": 5
+        },
+        {
+          "id": "68645fead541eb000fa1c349",
+          "name": "GIL3280_2 -- 7Beds, 3Bedrms, central location",
+          "pms": "guesty",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "2927366",
+          "name": "Central, Fabulous Home for Families or Conventions",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 4
+        },
+        {
+          "id": "46665853",
+          "name": "1720 first floor \u00b7 EXTRA SPACIOUS 2br Family Home in South Park",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 2
+        },
+        {
+          "id": "52678775",
+          "name": "J St \u00b7 ~Charming 3 Bedroom Abode 3mi from Downtown ~",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "1034840482606434063",
+          "name": "Barn-flower Farm House w/ views",
+          "pms": "airbnb",
+          "city": "Alpine",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "1076107143974050232",
+          "name": "Pagosa New \u00b7 Mountaintop Estate: Pool-Hot Tub-Theatre-Tiki Bar",
+          "pms": "airbnb",
+          "city": "Lakeside",
+          "state": "California",
+          "bedrooms": 5
+        },
+        {
+          "id": "1278338371543464035",
+          "name": "The Lake House \u00b7 Waterfront Home, Private Dock, Pickleball, BBQ",
+          "pms": "airbnb",
+          "city": "Lakeport",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "1333462981873966577",
+          "name": "",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 1
+        },
+        {
+          "id": "1348660207402761155",
+          "name": "50-Acre Ranch  Luxury Oasis  Nature Retreat",
+          "pms": "airbnb",
+          "city": "Valley Center",
+          "state": "California",
+          "bedrooms": 18
+        },
+        {
+          "id": "1356690583550831459",
+          "name": "8 Bedroom Lux on 50 acres",
+          "pms": "airbnb",
+          "city": "Valley Center",
+          "state": "California",
+          "bedrooms": 7
+        },
+        {
+          "id": "1182022546372228929",
+          "name": "DORADO \u00b7 Familiar y econ\u00f3mico  Frente al mar en Dorado",
+          "pms": "airbnb",
+          "city": "Dorado",
+          "state": null,
+          "bedrooms": 6
+        },
+        {
+          "id": "1260864715816063243",
+          "name": "AVE BARBOSA - EDIEL BK \u00b7 2Houses1Studio - BigGroupsAndFamilies",
+          "pms": "airbnb",
+          "city": "San Juan",
+          "state": null,
+          "bedrooms": 7
+        },
+        {
+          "id": "49376595",
+          "name": "Santurce - 1st Floor with back rooms \u00b7 9 bedrooms San Juan Santurce La Placita",
+          "pms": "airbnb",
+          "city": "San Juan",
+          "state": null,
+          "bedrooms": 9
+        },
+        {
+          "id": "54178460",
+          "name": "SANTURCE - ALL PROPERTY \u00b7 18 Bedrooms queen beds 7 baths La Placita",
+          "pms": "airbnb",
+          "city": "San Juan",
+          "state": null,
+          "bedrooms": 16
+        },
+        {
+          "id": "950200111937588929",
+          "name": "Scenic Oasis: King Bed Suite & Panoramic Views",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 2
+        },
+        {
+          "id": "1491483128090025720",
+          "name": "1936_oliver \u00b7 Fun-Filled Family Retreat | 6 Queens & Spa",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "1501759194053813606",
+          "name": "3745_33rd \u00b7 North Park, Walkable, Hot Tub",
+          "pms": "airbnb",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "68acecc1f36c65000ede652f",
+          "name": "1936_oliver -- Fun-Filled Family Retreat | 6 Queens &amp; Spa",
+          "pms": "guesty",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        },
+        {
+          "id": "68b7894e12028a001246795a",
+          "name": "3745_33rd -- North Park, Walkable, Hot Tub",
+          "pms": "guesty",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        }
+      ]
+    },
+    "special": {
+      "name": "Special Account",
+      "description": "Special account portfolio",
+      "listing_count": 2,
+      "listings": [
+        {
+          "id": "f6213c50-68be-4d0e-a99d-fbdd289812aa",
+          "name": "Scenic Oasis: King Bed Suite & Panoramic Views -- Scenic Oasis: King Bed Suite & Panoramic Views",
+          "pms": "yourporter",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 2
+        },
+        {
+          "id": "30fb8d80-2050-4d9f-bb64-392f9dfca408",
+          "name": "Consolidated Account -- Consolidated Account \u00b7 Scenic Oasis: King Bed Suite & Private Granny Flat",
+          "pms": "yourporter",
+          "city": "San Diego",
+          "state": "California",
+          "bedrooms": 3
+        }
+      ]
+    }
+  }
+}

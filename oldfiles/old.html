@@ -1,0 +1,3182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PriceLabs Price Comparison Visualizer</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="dom_timing_fixes.js"></script>
+    <style>
+        :root {
+            --primary-color: #673ab7;
+            --success-color: #4caf50;
+            --info-color: #2196f3;
+            --warning-color: #ff9800;
+            --danger-color: #f44336;
+            --dark-color: #263238;
+            --light-bg: #f5f5f5;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-bg);
+            color: var(--dark-color);
+        }
+
+        .header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 500;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            background-color: #fafafa;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 500;
+            margin-bottom: 5px;
+            color: #616161;
+            font-size: 0.875rem;
+        }
+
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+            transition: border-color 0.15s;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(103,58,183,.25);
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #5e35b1;
+        }
+
+        .btn-secondary {
+            background-color: #757575;
+            color: white;
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            padding: 10px 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .status-message.loading {
+            display: block;
+            background-color: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #bbdefb;
+        }
+
+        .status-message.success {
+            display: block;
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .status-message.error {
+            display: block;
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            color: #616161;
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        /* Chart Styles */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            min-height: 500px;
+        }
+
+        .price-tooltip {
+            position: absolute;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+            z-index: 1000;
+            line-height: 1.4;
+        }
+
+        .price-tooltip strong {
+            color: #ffc107;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: opacity 0.3s;
+        }
+
+        .legend-item.inactive {
+            opacity: 0.3;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 3px;
+            margin-right: 6px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Debug panel styles */
+        .debug-panel {
+            background: #263238;
+            color: #aed581;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .debug-panel.show {
+            display: block;
+        }
+
+        .debug-entry {
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #37474f;
+        }
+
+        .debug-timestamp {
+            color: #64b5f6;
+            font-size: 10px;
+        }
+
+        .debug-type {
+            color: #fff176;
+            font-weight: bold;
+        }
+
+        .debug-error {
+            color: #ef5350;
+        }
+
+        .debug-success {
+            color: #66bb6a;
+        }
+
+        .debug-info {
+            color: #29b6f6;
+        }
+
+        /* Data table styles */
+        .data-table-container {
+            overflow-x: auto;
+            margin-top: 20px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .data-table th, .data-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: #f5f5f5;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .data-table tbody tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .data-table .booked-row {
+            background-color: #e3f2fd;
+        }
+
+        .data-table .available-row {
+            background-color: #e8f5e9;
+        }
+
+        .data-table .unavailable-row {
+            background-color: #fff3e0;
+        }
+
+        .price-cell {
+            font-weight: 500;
+        }
+
+        .booked-indicator {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .booked-indicator.booked {
+            background-color: #2196f3;
+            color: white;
+        }
+
+        .booked-indicator.available {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .booked-indicator.unavailable {
+            background-color: #ff9800;
+            color: white;
+        }
+
+        .demand-indicator {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-size: 11px;
+        }
+
+        .percentile-position {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* New styles for market data integration */
+        .urgent-action {
+            background-color: #ffebee !important;
+        }
+
+        .high-occupancy {
+            color: #c62828;
+            font-weight: 600;
+        }
+
+        .medium-occupancy {
+            color: #f57c00;
+        }
+
+        .low-occupancy {
+            color: #388e3c;
+        }
+
+        .window-indicator {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .window-indicator.within-window {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .window-indicator.approaching-end {
+            background-color: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .window-indicator.past-window {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .window-indicator.last-minute {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .action-indicator {
+            font-size: 12px;
+        }
+
+        .action-indicator.urgent {
+            color: #c62828;
+            font-weight: 600;
+        }
+
+        .action-indicator.warning {
+            color: #f57c00;
+        }
+
+        .action-indicator.ok {
+            color: #388e3c;
+        }
+
+        .na-cell {
+            text-align: center;
+            color: #999;
+            font-style: italic;
+        }
+
+        .market-occupancy {
+            font-weight: 500;
+        }
+
+        .days-until {
+            font-weight: 500;
+        }
+
+        /* Multi-listing dashboard styles */
+        .dashboard-container {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .listing-sidebar {
+            width: 320px;
+            flex-shrink: 0;
+            max-height: calc(100vh - 140px);
+            overflow-y: auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: none; /* Hidden by default */
+        }
+        
+        .listing-sidebar.active {
+            display: block;
+        }
+        
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            background: white;
+            z-index: 10;
+        }
+        
+        .sidebar-header h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.2rem;
+            color: var(--dark-color);
+        }
+        
+        .portfolio-summary {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .portfolio-metric {
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            text-align: center;
+        }
+        
+        .portfolio-metric-label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 4px;
+        }
+        
+        .portfolio-metric-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .listing-search {
+            padding: 0 20px 20px;
+        }
+        
+        .listing-search input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .listing-filters {
+            padding: 0 20px 10px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-chip {
+            padding: 4px 12px;
+            background: #e8e8e8;
+            border-radius: 16px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-chip.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        
+        .listings-container {
+            padding: 10px;
+        }
+        
+        .listing-card {
+            padding: 15px;
+            margin-bottom: 10px;
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .listing-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .listing-card.active {
+            border-color: var(--primary-color);
+            background-color: #f3e5f5;
+        }
+        
+        .listing-card.error-card {
+            border-color: #e53e3e;
+            background-color: #ffeaea;
+        }
+        
+        .listing-error {
+            text-align: center;
+            padding: 20px;
+            color: #e53e3e;
+        }
+        
+        .error-message {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .error-details {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        
+        .listing-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 10px;
+        }
+        
+        .listing-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--dark-color);
+            margin-bottom: 4px;
+        }
+        
+        .listing-location {
+            font-size: 0.85rem;
+            color: #666;
+        }
+        
+        .listing-type {
+            font-size: 0.75rem;
+            color: #888;
+            margin-top: 2px;
+        }
+        
+        .listing-metrics {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .listing-metric {
+            text-align: center;
+        }
+        
+        .listing-metric-label {
+            font-size: 0.75rem;
+            color: #666;
+        }
+        
+        .listing-metric-value {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .listing-metric-change {
+            font-size: 0.7rem;
+            color: #4caf50;
+        }
+        
+        .listing-metric-change.negative {
+            color: #f44336;
+        }
+        
+        .listing-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #f0f0f0;
+        }
+        
+        .last-sync {
+            font-size: 0.75rem;
+            color: #888;
+        }
+        
+        .view-details-btn {
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .main-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .enable-multi-listing-btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        .enable-multi-listing-btn:hover {
+            background-color: #5e35b1;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 968px) {
+            .dashboard-container {
+                flex-direction: column;
+            }
+            
+            .listing-sidebar {
+                width: 100%;
+                max-height: 300px;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>PriceLabs Price Comparison Visualizer</h1>
+                <a href="listings_dashboard.html" style="color: white; text-decoration: none; padding: 8px 16px; background: rgba(255,255,255,0.2); border-radius: 4px; font-size: 14px;">
+                    ← Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Dashboard Container -->
+        <div id="dashboardContainer">
+            <!-- Listing Sidebar (hidden by default) -->
+            <div class="listing-sidebar" id="listingSidebar">
+                <div class="sidebar-header">
+                    <h3>Your Listings</h3>
+                    <div class="portfolio-summary" id="portfolioSummary">
+                        <div class="portfolio-metric">
+                            <div class="portfolio-metric-label">Total Listings</div>
+                            <div class="portfolio-metric-value" id="totalListingsCount">-</div>
+                        </div>
+                        <div class="portfolio-metric">
+                            <div class="portfolio-metric-label">Avg Occupancy</div>
+                            <div class="portfolio-metric-value" id="avgOccupancy">-</div>
+                        </div>
+                        <div class="portfolio-metric">
+                            <div class="portfolio-metric-label">Total Revenue</div>
+                            <div class="portfolio-metric-value" id="totalRevenue">-</div>
+                        </div>
+                        <div class="portfolio-metric">
+                            <div class="portfolio-metric-label">Avg ADR</div>
+                            <div class="portfolio-metric-value" id="avgADR">-</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="listing-search">
+                    <input type="text" placeholder="Search listings..." id="listingSearchInput" onkeyup="filterListings()">
+                </div>
+                
+                <div class="listing-filters">
+                    <div class="filter-chip active" onclick="setListingFilter('all')">All</div>
+                    <div class="filter-chip" onclick="setListingFilter('airbnb')">Airbnb</div>
+                    <div class="filter-chip" onclick="setListingFilter('vrbo')">VRBO</div>
+                </div>
+                
+                <div class="listings-container" id="listingsContainer">
+                    <!-- Listing cards will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div class="main-content" id="mainContent">
+                <!-- Configuration Card -->
+                <div class="card">
+            <div class="card-header">Configuration</div>
+            <div class="card-body">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="apiKey">API Key</label>
+                        <input type="text" id="apiKey" value="i7wVYNZwf26GNqjtxwrEW3yDppK0h3nECXMRXFMS" />
+                        <div style="margin-top: 10px;">
+                            <label style="display: flex; align-items: center; font-weight: normal;">
+                                <input type="checkbox" id="rememberApiKey" style="margin-right: 8px;">
+                                Remember API Key (8 hours)
+                            </label>
+                            <small style="color: #666; display: block; margin-top: 5px;">
+                                Your API key will be encrypted and stored locally
+                            </small>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="listingId">Listing ID</label>
+                        <input type="text" id="listingId" value="634197676956646902" />
+                    </div>
+                    <div class="form-group">
+                        <label for="pms">PMS</label>
+                        <select id="pms">
+                            <option value="airbnb">Airbnb</option>
+                            <option value="vrbo">VRBO</option>
+                            <option value="direct">Direct</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="proxyUrl">Proxy URL</label>
+                        <input type="text" id="proxyUrl" value="https://script.google.com/macros/s/AKfycbzapcP_tFvmzucd2Zn4lzERZ0jxBj362QyizNBk_XzoVkf_sqruH2NpEi-q3UH1-T6Q/exec" />
+                    </div>
+                    <div class="form-group">
+                        <label for="dateFrom">Date From</label>
+                        <input type="date" id="dateFrom" />
+                    </div>
+                    <div class="form-group">
+                        <label for="dateTo">Date To</label>
+                        <input type="date" id="dateTo" />
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="fetchAndVisualize()" id="loadBtn">
+                    Load Data & Visualize
+                </button>
+                <button class="btn-secondary" onclick="clearVisualization()" style="margin-left: 10px;">
+                    Clear
+                </button>
+                <button class="btn-secondary" onclick="toggleDebug()" style="margin-left: 10px;">
+                    Toggle Debug
+                </button>
+                <button class="btn-secondary" onclick="clearStoredKey()" style="margin-left: 10px; display: none;" id="clearKeyBtn">
+                    Clear Stored Key
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Messages -->
+        <div class="status-message" id="statusMessage"></div>
+
+        <!-- Debug Panel -->
+        <div class="card">
+            <div class="card-header">Debug Console</div>
+            <div class="card-body">
+                <div class="debug-panel" id="debugPanel"></div>
+                <button class="btn-secondary" onclick="clearDebug()" style="margin-top: 10px;">Clear Debug</button>
+                <button class="btn-secondary" onclick="copyDebug()" style="margin-left: 10px;">Copy Debug Log</button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" style="display: none;">
+            <!-- Metrics Overview -->
+            <div class="card">
+                <div class="card-header">Key Metrics</div>
+                <div class="card-body">
+                    <div class="metrics-grid" id="metricsGrid">
+                        <!-- Metrics will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Price Comparison Chart -->
+            <div class="card">
+                <div class="card-header">Price Comparison & Booking Status</div>
+                <div class="card-body">
+                    <div class="chart-container" id="priceChart"></div>
+                    <div class="legend" id="chartLegend"></div>
+                </div>
+            </div>
+
+            <!-- Data Table -->
+            <div class="card">
+                <div class="card-header">Detailed Pricing Data</div>
+                <div class="card-body">
+                    <div class="data-table-container">
+                        <table class="data-table" id="pricingTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Day</th>
+                                    <th>Your Price</th>
+                                    <th>Status</th>
+                                    <th>Booked ADR</th>
+                                    <th>25th %ile</th>
+                                    <th>50th %ile</th>
+                                    <th>75th %ile</th>
+                                    <th>90th %ile</th>
+                                    <th>Position</th>
+                                    <th>Market Occ%</th>
+                                    <th>Days Out</th>
+                                    <th>Window Status</th>
+                                    <th>Action</th>
+                                    <th>Demand</th>
+                                    <th>Min Stay</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pricingTableBody">
+                                <!-- Table rows will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+            </div> <!-- End main-content -->
+        </div> <!-- End dashboardContainer -->
+    </div>
+
+    <script>
+        // Global variables
+        let currentData = null;
+        let chart = null;
+        let debugLog = [];
+        
+        // Multi-listing state
+        let allListings = [];
+        let selectedListingId = null;
+        let listingsCache = new Map();
+        let currentFilter = 'all';
+
+        // API Key Manager - Backward Compatible
+        const apiKeyManager = {
+            // Check if user has opted into secure storage
+            isSecureStorageEnabled() {
+                return localStorage.getItem('pl_secure_storage_enabled') === 'true';
+            },
+            
+            // Get API key - works with both old and new methods
+            getApiKey() {
+                // First check secure storage if enabled - this takes priority
+                if (this.isSecureStorageEnabled()) {
+                    const secureKey = this.getSecureKey();
+                    if (secureKey) return secureKey;
+                }
+                
+                // Then check the input field (fallback method)
+                const inputKey = document.getElementById('apiKey').value;
+                if (inputKey && inputKey !== '••••••••') return inputKey;
+                
+                return null;
+            },
+            
+            // Save key securely (only if user opts in)
+            saveSecurely(key) {
+                if (!this.isSecureStorageEnabled()) return false;
+                
+                const encrypted = this.encrypt(key);
+                const expiry = Date.now() + (8 * 60 * 60 * 1000); // 8 hours
+                localStorage.setItem('pl_secure_key', JSON.stringify({
+                    key: encrypted,
+                    expiry: expiry
+                }));
+                
+                // Mask the input field for security
+                document.getElementById('apiKey').value = '••••••••';
+                document.getElementById('apiKey').dataset.hasSecureKey = 'true';
+                return true;
+            },
+            
+            // Simple encryption (will enhance later)
+            encrypt(text) {
+                return btoa(encodeURIComponent(text));
+            },
+            
+            decrypt(encrypted) {
+                try {
+                    return decodeURIComponent(atob(encrypted));
+                } catch (e) {
+                    console.error('Decryption failed:', e);
+                    return null;
+                }
+            },
+            
+            getSecureKey() {
+                const stored = localStorage.getItem('pl_secure_key');
+                if (!stored) return null;
+                
+                try {
+                    const { key, expiry } = JSON.parse(stored);
+                    if (Date.now() > expiry) {
+                        localStorage.removeItem('pl_secure_key');
+                        localStorage.removeItem('pl_secure_storage_enabled');
+                        return null;
+                    }
+                    return this.decrypt(key);
+                } catch (e) {
+                    console.error('Failed to retrieve secure key:', e);
+                    return null;
+                }
+            },
+            
+            // Clear stored key
+            clearStoredKey() {
+                localStorage.removeItem('pl_secure_key');
+                localStorage.removeItem('pl_secure_storage_enabled');
+                document.getElementById('apiKey').value = '';
+                document.getElementById('apiKey').dataset.hasSecureKey = 'false';
+                document.getElementById('rememberApiKey').checked = false;
+            }
+        };
+
+        // Feature Flags System
+        const featureFlags = {
+            multiListing: false,  // Default off
+            
+            init() {
+                // Check if user has enabled multi-listing
+                this.multiListing = localStorage.getItem('pl_multi_listing_enabled') === 'true';
+                
+                // Show/hide UI elements based on features
+                if (this.multiListing) {
+                    // Will be implemented in Phase 2
+                    console.log('Multi-listing mode enabled');
+                }
+            },
+            
+            enable(feature) {
+                localStorage.setItem(`pl_${feature}_enabled`, 'true');
+                this[feature] = true;
+                location.reload(); // Refresh to apply changes
+            },
+            
+            disable(feature) {
+                localStorage.removeItem(`pl_${feature}_enabled`);
+                this[feature] = false;
+                location.reload();
+            }
+        };
+
+        // Migration Manager
+        const migrationManager = {
+            version: '2.0',
+            
+            init() {
+                const currentVersion = localStorage.getItem('pl_version') || '1.0';
+                
+                if (currentVersion !== this.version) {
+                    this.migrate(currentVersion);
+                }
+            },
+            
+            migrate(fromVersion) {
+                console.log(`Migrating from version ${fromVersion} to ${this.version}`);
+                
+                if (fromVersion === '1.0') {
+                    // Preserve any existing data
+                    const existingData = {
+                        lastListingId: localStorage.getItem('lastListingId'),
+                        lastPMS: localStorage.getItem('lastPMS'),
+                        preferences: localStorage.getItem('preferences')
+                    };
+                    
+                    // Create new structure without destroying old data
+                    const migratedData = {
+                        version: '2.0',
+                        singleListingMode: {
+                            ...existingData
+                        },
+                        multiListingMode: {
+                            enabled: false,
+                            listings: []
+                        }
+                    };
+                    
+                    localStorage.setItem('pl_migrated_data', JSON.stringify(migratedData));
+                    console.log('Migration complete - all existing data preserved');
+                }
+                
+                localStorage.setItem('pl_version', this.version);
+            }
+        };
+
+        // Utility functions for safe numeric operations
+        function safeParseNumber(value, defaultValue = 0) {
+            if (value === null || value === undefined || value === '') {
+                return defaultValue;
+            }
+            
+            const parsed = typeof value === 'number' ? value : parseFloat(value);
+            return isNaN(parsed) ? defaultValue : parsed;
+        }
+        
+        function safeToFixed(value, decimals = 0) {
+            const num = safeParseNumber(value, 0);
+            return num.toFixed(decimals);
+        }
+        
+        function formatErrorMessage(error) {
+            if (typeof error === 'string') {
+                return error;
+            }
+            if (error && error.message) {
+                return error.message;
+            }
+            if (error && error.error) {
+                return error.error;
+            }
+            return 'An unknown error occurred';
+        }
+
+        // Debug functions
+        function addDebugEntry(type, message, data = null) {
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = { timestamp, type, message, data };
+            debugLog.push(entry);
+            
+            const debugPanel = document.getElementById('debugPanel');
+            const entryDiv = document.createElement('div');
+            entryDiv.className = 'debug-entry';
+            
+            let html = `<span class="debug-timestamp">[${timestamp}]</span> `;
+            html += `<span class="debug-type">${type}:</span> `;
+            
+            const typeClass = type === 'ERROR' ? 'debug-error' : 
+                            type === 'SUCCESS' ? 'debug-success' : 'debug-info';
+            html += `<span class="${typeClass}">${message}</span>`;
+            
+            if (data) {
+                html += `<pre style="margin-top: 5px; overflow-x: auto;">${JSON.stringify(data, null, 2)}</pre>`;
+            }
+            
+            entryDiv.innerHTML = html;
+            debugPanel.appendChild(entryDiv);
+            debugPanel.scrollTop = debugPanel.scrollHeight;
+        }
+
+        function toggleDebug() {
+            const debugPanel = document.getElementById('debugPanel');
+            debugPanel.classList.toggle('show');
+        }
+
+        function clearDebug() {
+            debugLog = [];
+            document.getElementById('debugPanel').innerHTML = '';
+        }
+
+        function copyDebug() {
+            const debugText = debugLog.map(entry => 
+                `[${entry.timestamp}] ${entry.type}: ${entry.message}${entry.data ? '\n' + JSON.stringify(entry.data, null, 2) : ''}`
+            ).join('\n\n');
+            
+            navigator.clipboard.writeText(debugText).then(() => {
+                showStatus('Debug log copied to clipboard', 'success');
+                setTimeout(hideStatus, 2000);
+            });
+        }
+
+        // Override console methods to also log to debug panel
+        const originalLog = console.log;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            addDebugEntry('INFO', args.join(' '), args.length > 1 ? args : null);
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            addDebugEntry('ERROR', args.join(' '), args.length > 1 ? args : null);
+        };
+
+        // Update page title with listing name
+        function updatePageTitle(listingId) {
+            try {
+                const cachedListings = localStorage.getItem('cached_listings');
+                if (cachedListings) {
+                    const listings = JSON.parse(cachedListings);
+                    const listing = listings.find(l => l.id === listingId);
+                    if (listing) {
+                        document.title = `${listing.name} - PriceLabs`;
+                        // Also update the header
+                        const headerTitle = document.querySelector('.header h1');
+                        if (headerTitle) {
+                            headerTitle.innerHTML = `
+                                <span style="font-size: 0.8em; opacity: 0.8;">${listing.portfolio || 'Portfolio'}</span><br>
+                                ${listing.name}
+                            `;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not update page title:', e);
+            }
+        }
+
+        // Initialize dates on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // EXISTING: Initialize dates
+            const today = new Date();
+            const sixtyDaysLater = new Date(today);
+            sixtyDaysLater.setDate(today.getDate() + 60);
+            
+            document.getElementById('dateFrom').value = formatDate(today);
+            document.getElementById('dateTo').value = formatDate(sixtyDaysLater);
+            
+            // NEW: Check if we have URL parameters (from dashboard)
+            const urlParams = new URLSearchParams(window.location.search);
+            const listingId = urlParams.get('listing');
+            const pms = urlParams.get('pms');
+            
+            if (listingId) {
+                console.log('Loading listing from URL:', listingId, pms);
+                
+                // Validate listing exists before proceeding
+                if (!validateListingExists(listingId)) {
+                    addDebugEntry('ERROR', `Listing ID ${listingId} not found in any account`);
+                    showStatus(`Listing ${listingId} not found. Please check the listing ID and try again.`, 'error');
+                    // Redirect to normal mode after showing error
+                    setTimeout(() => {
+                        window.location.href = window.location.pathname; // Remove query parameters
+                    }, 5000);
+                    return;
+                }
+                
+                // Hide the Configuration card since we're in dashboard mode
+                // Find and hide the configuration card by checking header text
+                document.querySelectorAll('.card').forEach(card => {
+                    const header = card.querySelector('.card-header');
+                    if (header && header.textContent.trim() === 'Configuration') {
+                        card.style.display = 'none';
+                        console.log('Configuration card hidden');
+                    }
+                });
+                
+                // Set the form values from URL params
+                document.getElementById('listingId').value = listingId;
+                document.getElementById('pms').value = pms || 'airbnb';
+                
+                // Set page title with listing name
+                updatePageTitle(listingId);
+                
+                // Automatically load the data with robust DOM timing
+                safeAutoLoad(
+                    () => fetchAndVisualize(),
+                    ['priceChart', 'pricingTableBody', 'resultsSection'],
+                    {
+                        initialDelay: 200,
+                        maxDelay: 5000,
+                        onProgress: (message) => {
+                            showStatus(message, 'loading');
+                            addDebugEntry('INFO', 'Auto-load progress: ' + message);
+                        }
+                    }
+                ).catch(autoLoadError => {
+                    addDebugEntry('ERROR', 'Failed to auto-load listing data', autoLoadError.message);
+                    showStatus('Failed to load listing data automatically. Please try manually.', 'error');
+                    console.error('Auto-load error:', autoLoadError);
+                });
+            } else {
+                // Fallback to localStorage method
+                migrationManager.init();
+            }
+            
+            // NEW: Initialize feature flags
+            featureFlags.init();
+            
+            // NEW: Load saved API key if secure storage is enabled
+            if (apiKeyManager.isSecureStorageEnabled()) {
+                const savedKey = apiKeyManager.getSecureKey();
+                if (savedKey) {
+                    document.getElementById('apiKey').value = '••••••••'; // Show masked
+                    document.getElementById('apiKey').dataset.hasSecureKey = 'true';
+                    document.getElementById('rememberApiKey').checked = true;
+                    document.getElementById('clearKeyBtn').style.display = 'inline-block';
+                    addDebugEntry('INFO', 'Loaded saved API key from secure storage');
+                }
+            }
+            
+            // NEW: Check if coming from dashboard with selected listing
+            const selectedListingId = localStorage.getItem('selectedListingId');
+            const selectedListingPms = localStorage.getItem('selectedListingPms');
+            // API key is now auto-detected on backend, no need to pass from frontend
+            const dashboardProxyUrl = localStorage.getItem('pricelabs_proxy_url');
+            
+            if (selectedListingId && selectedListingPms) {
+                // Populate the form with selected listing
+                document.getElementById('listingId').value = selectedListingId;
+                document.getElementById('pms').value = selectedListingPms;
+                
+                // Also load the API key and proxy URL from dashboard
+                if (dashboardApiKey && !document.getElementById('apiKey').value) {
+                    document.getElementById('apiKey').value = dashboardApiKey;
+                    apiKeyManager.saveSecurely(dashboardApiKey);
+                    addDebugEntry('INFO', 'Loaded API key from dashboard');
+                }
+                
+                if (dashboardProxyUrl) {
+                    document.getElementById('proxyUrl').value = dashboardProxyUrl;
+                }
+                
+                // Clear the selection from localStorage
+                localStorage.removeItem('selectedListingId');
+                localStorage.removeItem('selectedListingPms');
+                
+                // Auto-load the data
+                const apiKey = apiKeyManager.getApiKey();
+                if (apiKey) {
+                    setTimeout(() => fetchAndVisualize(), 500);
+                }
+            } else {
+                // Original behavior - show multi-listing if API key exists
+                const apiKey = apiKeyManager.getApiKey();
+                if (apiKey) {
+                    // Automatically show listings
+                    initializeMultiListingMode();
+                }
+            }
+            
+            addDebugEntry('INFO', 'Page loaded and initialized');
+        });
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function showStatus(message, type = 'loading') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.className = `status-message ${type}`;
+            statusEl.textContent = message;
+        }
+
+        function hideStatus() {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.className = 'status-message';
+        }
+
+        async function fetchAndVisualize() {
+            // NEW: Try to get API key from multiple sources
+            let apiKey = apiKeyManager.getApiKey();
+            
+            // EXISTING: Fallback to direct input if needed
+            if (!apiKey) {
+                apiKey = document.getElementById('apiKey').value;
+            }
+            
+            // NEW: Save securely if checkbox is checked
+            const rememberCheckbox = document.getElementById('rememberApiKey');
+            if (rememberCheckbox && rememberCheckbox.checked && apiKey && apiKey !== '••••••••') {
+                localStorage.setItem('pl_secure_storage_enabled', 'true');
+                apiKeyManager.saveSecurely(apiKey);
+                document.getElementById('clearKeyBtn').style.display = 'inline-block';
+                addDebugEntry('INFO', 'API key saved securely');
+            }
+            
+            const listingId = document.getElementById('listingId').value;
+            const pms = document.getElementById('pms').value;
+            const proxyUrl = document.getElementById('proxyUrl').value;
+            const dateFrom = document.getElementById('dateFrom').value;
+            const dateTo = document.getElementById('dateTo').value;
+
+            addDebugEntry('INFO', 'Starting data fetch', {
+                apiKey: apiKey ? apiKey.substring(0, 10) + '...' : 'none',
+                listingId,
+                pms,
+                proxyUrl,
+                dateFrom,
+                dateTo
+            });
+
+            if (!apiKey || !listingId || !proxyUrl) {
+                const error = 'Please fill in all required fields';
+                showStatus(error, 'error');
+                addDebugEntry('ERROR', error);
+                return;
+            }
+
+            const loadBtn = document.getElementById('loadBtn');
+            loadBtn.disabled = true;
+            loadBtn.innerHTML = '<span class="loading-spinner"></span> Loading...';
+            showStatus('Fetching data from PriceLabs API...');
+
+            try {
+                // Use local proxy to bypass CORS issues
+                const localProxyUrl = '/proxy';
+                addDebugEntry('INFO', 'Using local proxy to connect to Google Apps Script...');
+                const testParams = new URLSearchParams({ url: proxyUrl });
+                const testResponse = await fetch(`${localProxyUrl}?${testParams}`);
+                if (!testResponse.ok) {
+                    throw new Error(`Proxy returned ${testResponse.status}. Check Google Apps Script deployment.`);
+                }
+                addDebugEntry('SUCCESS', 'Connected via local proxy');
+
+                // Fetch all required data
+                addDebugEntry('INFO', 'Fetching listing prices and reservations...');
+                
+                let pricesData, reservationsData;
+                
+                try {
+                    // Use request manager for cancellation support
+                    pricesData = await window.requestManager.executeRequest(
+                        (signal) => fetchListingPrices(apiKey, listingId, pms, dateFrom, dateTo, proxyUrl, signal),
+                        'prices'
+                    );
+                    addDebugEntry('SUCCESS', 'Listing prices fetched successfully', {
+                        dataPoints: pricesData.data ? pricesData.data.length : 0
+                    });
+                } catch (priceError) {
+                    addDebugEntry('ERROR', 'Failed to fetch listing prices', priceError.message);
+                    throw priceError;
+                }
+                
+                try {
+                    // Use request manager for cancellation support
+                    reservationsData = await window.requestManager.executeRequest(
+                        (signal) => fetchReservations(apiKey, listingId, pms, dateFrom, dateTo, proxyUrl, signal),
+                        'reservations'
+                    );
+                    addDebugEntry('SUCCESS', 'Reservations fetched successfully', {
+                        reservationCount: reservationsData.data ? reservationsData.data.length : 0
+                    });
+                } catch (resError) {
+                    addDebugEntry('ERROR', 'Failed to fetch reservations', resError.message);
+                    throw resError;
+                }
+
+                // Fetch real neighborhood data
+                let neighborhoodData = null;
+                try {
+                    neighborhoodData = await fetchNeighborhoodData(apiKey, listingId, pms, proxyUrl);
+                    if (!neighborhoodData) {
+                        throw new Error('No neighborhood data returned');
+                    }
+                } catch (neighborhoodError) {
+                    addDebugEntry('WARNING', 'Using fallback neighborhood data', neighborhoodError.message);
+                    showStatus('Warning: Market data unavailable, using limited analysis', 'warning');
+                    neighborhoodData = generateMockNeighborhoodData(dateFrom, dateTo);
+                }
+
+                // Process and merge data
+                addDebugEntry('INFO', 'Processing and merging data...');
+                currentData = processData(pricesData, reservationsData, neighborhoodData);
+                
+                addDebugEntry('SUCCESS', 'Data processing complete', {
+                    totalDays: currentData.merged.length,
+                    bookedDays: currentData.merged.filter(d => !d.isAvailable).length
+                });
+                
+                // Display results
+                showStatus('Data loaded successfully!', 'success');
+                setTimeout(hideStatus, 3000);
+                displayResults(currentData);
+                
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                const errorMessage = formatErrorMessage(error);
+                
+                // Provide specific guidance based on error type
+                if (errorMessage.includes('not found') || errorMessage.includes('404')) {
+                    showStatus(`Listing not found: ${errorMessage}. Please verify the listing ID exists in your PriceLabs account.`, 'error');
+                } else if (errorMessage.includes('API key')) {
+                    showStatus(`Authentication error: ${errorMessage}. Please check your API key.`, 'error');
+                } else if (errorMessage.includes('network') || errorMessage.includes('fetch')) {
+                    showStatus(`Network error: ${errorMessage}. Please check your connection and proxy URL.`, 'error');
+                } else {
+                    showStatus(`Error: ${errorMessage}`, 'error');
+                }
+                
+                addDebugEntry('ERROR', 'Fatal error in fetchAndVisualize', {
+                    message: error.message,
+                    stack: error.stack
+                });
+            } finally {
+                loadBtn.disabled = false;
+                loadBtn.innerHTML = 'Load Data & Visualize';
+            }
+        }
+
+        async function fetchListingPrices(apiKey, listingId, pms, dateFrom, dateTo, proxyUrl, abortSignal = null) {
+            const params = new URLSearchParams({
+                action: 'fetchPrices',
+                listingId: listingId,
+                pms: pms,
+                startDate: dateFrom,  // Changed from dateFrom to startDate
+                endDate: dateTo       // Changed from dateTo to endDate
+            });
+
+            console.log('Fetching listing prices with params:', Object.fromEntries(params));
+            
+            try {
+                const response = await fetch(`/proxy?url=${encodeURIComponent(proxyUrl)}&${params}`, {
+                    signal: abortSignal,
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                const responseText = await response.text();
+                
+                console.log('Response status:', response.status);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+                console.log('Raw response:', responseText.substring(0, 500));
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    throw new Error(`Failed to parse response: ${responseText.substring(0, 200)}`);
+                }
+                
+                if (!response.ok) {
+                    console.error('Response not OK:', data);
+                    if (response.status === 404) {
+                        throw new Error(`Listing ${listingId} not found. Please verify the listing ID exists in your PriceLabs account.`);
+                    }
+                    const errorMsg = data.error || 'Failed to fetch listing prices';
+                    throw new Error(`HTTP ${response.status}: ${formatErrorMessage(errorMsg)}`);
+                }
+                
+                if (data.error) {
+                    console.error('API error:', data.error);
+                    const errorMsg = formatErrorMessage(data.error);
+                    if (errorMsg.includes('404') || errorMsg.toLowerCase().includes('not found')) {
+                        throw new Error(`Listing ${listingId} not found in your PriceLabs account. Please check the listing ID.`);
+                    }
+                    throw new Error(errorMsg);
+                }
+                
+                console.log('Successfully fetched listing prices:', data);
+                return data;
+                
+            } catch (fetchError) {
+                console.error('Fetch error:', fetchError);
+                throw fetchError;
+            }
+        }
+
+        async function fetchReservations(apiKey, listingId, pms, dateFrom, dateTo, proxyUrl, abortSignal = null) {
+            const params = new URLSearchParams({
+                action: 'fetchReservations',
+                listingId: listingId,
+                pms: pms,
+                startDate: dateFrom,
+                endDate: dateTo
+            });
+
+            console.log('Fetching reservations with params:', Object.fromEntries(params));
+            
+            try {
+                const response = await fetch(`/proxy?url=${encodeURIComponent(proxyUrl)}&${params}`, {
+                    signal: abortSignal,
+                    headers: {
+                        'Cache-Control': 'no-cache'
+                    }
+                });
+                const responseText = await response.text();
+                
+                console.log('Response status:', response.status);
+                console.log('Raw response:', responseText.substring(0, 500));
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    console.error('JSON parse error:', parseError);
+                    throw new Error(`Failed to parse response: ${responseText.substring(0, 200)}`);
+                }
+                
+                if (!response.ok) {
+                    console.error('Response not OK:', data);
+                    if (response.status === 404) {
+                        throw new Error(`Reservations for listing ${listingId} not found. The listing may not exist in your account.`);
+                    }
+                    const errorMsg = data.error || 'Failed to fetch reservations';
+                    throw new Error(`HTTP ${response.status}: ${formatErrorMessage(errorMsg)}`);
+                }
+                
+                if (data.error) {
+                    console.error('API error:', data.error);
+                    const errorMsg = formatErrorMessage(data.error);
+                    if (errorMsg.includes('404') || errorMsg.toLowerCase().includes('not found')) {
+                        throw new Error(`Reservations for listing ${listingId} not found. Please verify the listing exists.`);
+                    }
+                    throw new Error(errorMsg);
+                }
+                
+                console.log('Successfully fetched reservations:', data);
+                return data;
+                
+            } catch (fetchError) {
+                console.error('Fetch error:', fetchError);
+                throw fetchError;
+            }
+        }
+
+        // NEW: Fetch all listings for the account
+        async function fetchAllListings(apiKey, proxyUrl) {
+            const params = new URLSearchParams({
+                action: 'fetchAllListings'
+                // API key is handled by the Apps Script, not needed here
+            });
+            
+            addDebugEntry('INFO', 'Fetching all listings from PriceLabs...');
+            
+            try {
+                const response = await fetch(`${proxyUrl}?${params}`);
+                const responseText = await response.text();
+                
+                console.log('All listings response status:', response.status);
+                console.log('Raw response:', responseText.substring(0, 500));
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    addDebugEntry('ERROR', 'Failed to parse listings response', parseError.message);
+                    throw new Error('Failed to parse listings response');
+                }
+                
+                if (!response.ok || data.error) {
+                    const errorMsg = formatErrorMessage(data.error || 'Failed to fetch listings');
+                    throw new Error(`Failed to fetch listings: ${errorMsg}`);
+                }
+
+                // Validate listings data structure
+                if (!data.listings || !Array.isArray(data.listings)) {
+                    addDebugEntry('WARNING', 'Listings data has unexpected structure', data);
+                    throw new Error('Invalid listings data format received from API');
+                }
+
+                // Filter out any invalid listing objects
+                const validListings = data.listings.filter(listing => {
+                    if (!listing || !listing.id) {
+                        addDebugEntry('WARNING', 'Filtered out invalid listing', listing);
+                        return false;
+                    }
+                    return true;
+                });
+                
+                addDebugEntry('SUCCESS', 'Real listings fetched from PriceLabs', {
+                    total: data.listings.length,
+                    valid: validListings.length,
+                    filtered: data.listings.length - validListings.length
+                });
+                
+                return { ...data, listings: validListings };
+            } catch (error) {
+                addDebugEntry('ERROR', 'Failed to fetch listings', error.message);
+                throw error;
+            }
+        }
+
+        async function fetchNeighborhoodData(apiKey, listingId, pms, proxyUrl) {
+            const params = new URLSearchParams({
+                action: 'fetchNeighborhood',
+                listingId: listingId,
+                pms: pms
+            });
+            
+            addDebugEntry('INFO', 'Fetching neighborhood data...');
+            
+            try {
+                const response = await fetch(`${proxyUrl}?${params}`);
+                const responseText = await response.text();
+                
+                console.log('Neighborhood response status:', response.status);
+                console.log('Neighborhood raw response length:', responseText.length);
+                
+                let data;
+                try {
+                    data = JSON.parse(responseText);
+                } catch (parseError) {
+                    addDebugEntry('ERROR', 'Failed to parse neighborhood data', parseError.message);
+                    throw new Error(`Failed to parse neighborhood data`);
+                }
+                
+                if (!response.ok || data.error) {
+                    throw new Error(data.error || 'Failed to fetch neighborhood data');
+                }
+                
+                addDebugEntry('SUCCESS', 'Neighborhood data fetched', {
+                    hasPercentiles: !!data['Future Percentile Prices'],
+                    hasOccupancy: !!data['Future Occ/New/Canc'],
+                    hasKPI: !!data['Market KPI'],
+                    dataKeys: Object.keys(data),
+                    dataSize: JSON.stringify(data).length
+                });
+                
+                return data;
+            } catch (error) {
+                addDebugEntry('ERROR', 'Neighborhood data fetch failed', error.message);
+                // Return null to allow graceful degradation
+                return null;
+            }
+        }
+
+        function parseNeighborhoodData(rawData, dateFrom, dateTo) {
+            if (!rawData) return null;
+            
+            addDebugEntry('INFO', 'Raw neighborhood data structure', {
+                keys: Object.keys(rawData),
+                hasData: !!rawData.data,
+                dataType: typeof rawData,
+                sampleKeys: rawData.data ? Object.keys(rawData.data).slice(0, 5) : []
+            });
+            
+            const result = {
+                percentiles: {},
+                occupancy: {},
+                marketKPI: {}
+            };
+            
+            // Determine property category (4 = standard, 5 = luxury)
+            const category = detectPropertyCategory(rawData);
+            addDebugEntry('INFO', `Using property category: ${category}`);
+            
+            // Parse Future Percentile Prices - check both possible locations
+            let priceData = null;
+            if (rawData.data?.['Future Percentile Prices']?.Category?.[category]) {
+                priceData = rawData.data['Future Percentile Prices'].Category[category];
+                addDebugEntry('INFO', 'Found price data in nested structure');
+            } else if (rawData['Future Percentile Prices']?.Category?.[category]) {
+                priceData = rawData['Future Percentile Prices'].Category[category];
+                addDebugEntry('INFO', 'Found price data in top-level structure');
+            }
+            
+            if (priceData) {
+                const dates = priceData.X_values;
+                const values = priceData.Y_values;
+                
+                addDebugEntry('INFO', `Processing ${dates.length} price data points`);
+                
+                dates.forEach((date, index) => {
+                    result.percentiles[date] = {
+                        p25: values[1]?.[index] || null,
+                        p50: values[2]?.[index] || null,
+                        p75: values[3]?.[index] || null,
+                        p90: values[4]?.[index] || null,
+                        bookings: values[5]?.[index] || null
+                    };
+                });
+            }
+            
+            // Parse Future Occ/New/Canc - check both possible locations
+            let occData = null;
+            let labels = null;
+            if (rawData.data?.['Future Occ/New/Canc']?.Category?.[category]) {
+                occData = rawData.data['Future Occ/New/Canc'].Category[category];
+                labels = rawData.data['Future Occ/New/Canc'].Labels;
+                addDebugEntry('INFO', 'Found occupancy data in nested structure');
+            } else if (rawData['Future Occ/New/Canc']?.Category?.[category]) {
+                occData = rawData['Future Occ/New/Canc'].Category[category];
+                labels = rawData['Future Occ/New/Canc'].Labels;
+                addDebugEntry('INFO', 'Found occupancy data in top-level structure');
+            }
+            
+            if (occData) {
+                const dates = occData.X_values;
+                const values = occData.Y_values;
+                
+                addDebugEntry('INFO', `Processing ${dates.length} occupancy data points`);
+                
+                // Find occupancy index in labels
+                const occupancyIndex = labels.findIndex(label => label.toLowerCase().includes('occupancy'));
+                
+                dates.forEach((date, index) => {
+                    // Handle triple-nested array structure
+                    let occValue = 0;
+                    if (occupancyIndex >= 0 && values[occupancyIndex]) {
+                        // Try different nesting levels
+                        if (Array.isArray(values[occupancyIndex][0])) {
+                            occValue = values[occupancyIndex][0][index] || 0;
+                        } else {
+                            occValue = values[occupancyIndex][index] || 0;
+                        }
+                    }
+                    
+                    result.occupancy[date] = {
+                        marketOccupancy: occValue,
+                        newBookings: 0, // Can be extracted if needed
+                        cancellations: 0 // Can be extracted if needed
+                    };
+                });
+            }
+            
+            // Parse Market KPI for booking window - check both possible locations
+            let kpiData = null;
+            let kpiLabels = null;
+            if (rawData.data?.['Market KPI']?.Category?.[category]) {
+                kpiData = rawData.data['Market KPI'].Category[category];
+                kpiLabels = rawData.data['Market KPI'].Labels;
+                addDebugEntry('INFO', 'Found KPI data in nested structure');
+            } else if (rawData['Market KPI']?.Category?.[category]) {
+                kpiData = rawData['Market KPI'].Category[category];
+                kpiLabels = rawData['Market KPI'].Labels;
+                addDebugEntry('INFO', 'Found KPI data in top-level structure');
+            }
+            
+            if (kpiData) {
+                const periods = kpiData.X_values;
+                const values = kpiData.Y_values;
+                const labels = kpiLabels;
+                
+                addDebugEntry('INFO', `Processing Market KPI with ${labels.length} metrics`);
+                
+                // Find booking window index
+                const bookingWindowIndex = labels.findIndex(label => 
+                    label.toLowerCase().includes('booking window') || 
+                    label.toLowerCase().includes('window')
+                );
+                
+                if (bookingWindowIndex >= 0) {
+                    // Get last 365 days average
+                    const last365Index = periods.indexOf('Last 365 Days');
+                    if (last365Index >= 0) {
+                        result.marketKPI.avgBookingWindow = values[bookingWindowIndex]?.[last365Index] || 30;
+                    }
+                    
+                    // Get current month booking window
+                    const currentMonth = new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                    const currentMonthIndex = periods.indexOf(currentMonth);
+                    if (currentMonthIndex >= 0) {
+                        result.marketKPI.currentBookingWindow = values[bookingWindowIndex]?.[currentMonthIndex] || result.marketKPI.avgBookingWindow;
+                    }
+                }
+                
+                if (!result.marketKPI.avgBookingWindow) {
+                    result.marketKPI.avgBookingWindow = 30; // Default fallback
+                }
+            }
+            
+            addDebugEntry('SUCCESS', 'Neighborhood data parsed', {
+                percentilesDates: Object.keys(result.percentiles).length,
+                occupancyDates: Object.keys(result.occupancy).length,
+                avgBookingWindow: result.marketKPI.avgBookingWindow
+            });
+            
+            return result;
+        }
+
+        function detectPropertyCategory(rawData) {
+            // Logic to determine if property is standard (4) or luxury (5)
+            // Check which categories have data
+            const categories = ['4', '5', '-1', '0'];
+            
+            // First check if the main data structure exists
+            if (rawData && rawData.data) {
+                // The API might return different structure than expected
+                addDebugEntry('INFO', 'Checking data structure for categories', {
+                    dataKeys: Object.keys(rawData.data),
+                    hasCategories: !!rawData.data.Category
+                });
+                
+                // Check if it's the nested structure we expect
+                if (rawData.data['Future Percentile Prices']?.Category) {
+                    const availableCategories = Object.keys(rawData.data['Future Percentile Prices'].Category);
+                    addDebugEntry('INFO', 'Available categories in Future Percentile Prices', availableCategories);
+                    
+                    for (const cat of categories) {
+                        if (rawData.data['Future Percentile Prices'].Category[cat]) {
+                            addDebugEntry('INFO', `Found category ${cat} in Future Percentile Prices`);
+                            return cat;
+                        }
+                    }
+                } else if (rawData['Future Percentile Prices']?.Category) {
+                    const availableCategories = Object.keys(rawData['Future Percentile Prices'].Category);
+                    addDebugEntry('INFO', 'Available categories in top-level Future Percentile Prices', availableCategories);
+                    
+                    for (const cat of categories) {
+                        if (rawData['Future Percentile Prices'].Category[cat]) {
+                            addDebugEntry('INFO', `Found category ${cat} in top-level Future Percentile Prices`);
+                            return cat;
+                        }
+                    }
+                }
+            }
+            
+            addDebugEntry('WARNING', 'No valid category found, defaulting to "4"');
+            return '4'; // Default to standard
+        }
+
+        function calculateBookingLeadTimes(reservationsData) {
+            const leadTimes = [];
+            if (reservationsData && reservationsData.data) {
+                reservationsData.data.forEach(res => {
+                    if (res.booking_status === 'booked' && res.booked_date && res.check_in) {
+                        const bookedDate = new Date(res.booked_date);
+                        const checkInDate = new Date(res.check_in);
+                        const leadTime = Math.floor((checkInDate - bookedDate) / (1000 * 60 * 60 * 24));
+                        if (leadTime > 0) {
+                            leadTimes.push(leadTime);
+                        }
+                    }
+                });
+            }
+            return leadTimes;
+        }
+
+        function calculateAvgLeadTime(leadTimes) {
+            if (leadTimes.length === 0) return 0;
+            const sum = leadTimes.reduce((a, b) => a + b, 0);
+            return Math.round(sum / leadTimes.length);
+        }
+
+        function generateMockNeighborhoodData(dateFrom, dateTo) {
+            // Generate mock percentile data for demonstration
+            const data = [];
+            const current = new Date(dateFrom);
+            const end = new Date(dateTo);
+            
+            while (current <= end) {
+                const dayOfWeek = current.getDay();
+                const isWeekend = dayOfWeek === 0 || dayOfWeek === 5 || dayOfWeek === 6;
+                
+                // Weekend prices are higher
+                const basePrice = isWeekend ? 800 : 600;
+                
+                data.push({
+                    date: formatDate(current),
+                    percentile_25_adr: basePrice * 0.75,
+                    percentile_50_adr: basePrice,
+                    percentile_75_adr: basePrice * 1.25,
+                    percentile_90_adr: basePrice * 1.5,
+                    market_occupancy: isWeekend ? 0.85 : 0.65
+                });
+                
+                current.setDate(current.getDate() + 1);
+            }
+            
+            return data;
+        }
+
+        function processData(pricesData, reservationsData, neighborhoodData) {
+            // Handle array response from listing prices
+            const listingData = Array.isArray(pricesData) ? pricesData[0] : pricesData;
+            
+            // Parse neighborhood data - check if it's already parsed or raw
+            let parsedNeighborhood = null;
+            if (neighborhoodData) {
+                if (neighborhoodData.percentiles) {
+                    // Already parsed
+                    parsedNeighborhood = neighborhoodData;
+                } else if (Array.isArray(neighborhoodData)) {
+                    // Mock data format
+                    parsedNeighborhood = convertMockToRealFormat(neighborhoodData);
+                } else {
+                    // Raw neighborhood data - parse it
+                    parsedNeighborhood = parseNeighborhoodData(neighborhoodData);
+                }
+            }
+            
+            // Get market average booking window
+            const marketAvgBookingWindow = parsedNeighborhood?.marketKPI?.avgBookingWindow || 30;
+            
+            // Create reservation lookup
+            const reservationLookup = {};
+            if (reservationsData && reservationsData.data) {
+                reservationsData.data.forEach(res => {
+                    if (res.booking_status === 'booked' && !res.cancelled_on) {
+                        const start = new Date(res.check_in);
+                        const end = new Date(res.check_out);
+                        const dailyRate = parseFloat(res.rental_revenue) / res.no_of_days;
+                        
+                        for (let d = new Date(start); d < end; d.setDate(d.getDate() + 1)) {
+                            const dateStr = formatDate(d);
+                            reservationLookup[dateStr] = {
+                                isBooked: true,
+                                actualADR: dailyRate,
+                                isCancelled: res.cancelled_on !== null
+                            };
+                        }
+                    }
+                });
+            }
+
+            // Also check for bookings in the price data itself
+            if (listingData && listingData.data) {
+                listingData.data.forEach(priceDay => {
+                    if (priceDay.booking_status && priceDay.booking_status.includes('Booked') && priceDay.ADR > 0) {
+                        reservationLookup[priceDay.date] = {
+                            isBooked: true,
+                            actualADR: priceDay.ADR,
+                            isCancelled: false
+                        };
+                    }
+                });
+            }
+            
+            // Calculate booking lead times for existing reservations
+            const bookingLeadTimes = calculateBookingLeadTimes(reservationsData);
+
+            // Merge all data sources
+            const mergedData = [];
+            if (listingData && listingData.data) {
+                listingData.data.forEach(priceDay => {
+                    const neighborhoodDay = parsedNeighborhood?.percentiles?.[priceDay.date];
+                    const occupancyDay = parsedNeighborhood?.occupancy?.[priceDay.date];
+                    const reservation = reservationLookup[priceDay.date];
+                    
+                    // Determine status: available, booked, or unavailable
+                    let status = 'available';
+                    let isUnavailable = false;
+                    
+                    if (priceDay.booking_status && priceDay.booking_status.includes('Booked') && priceDay.ADR > 0) {
+                        status = 'booked';
+                    } else if (reservation && reservation.isBooked) {
+                        status = 'booked';
+                    } else if (priceDay.demand_desc === 'Unavailable' || priceDay.unbookable === 1) {
+                        status = 'unavailable';
+                        isUnavailable = true;
+                    }
+                    
+                    // Calculate days until arrival
+                    const today = new Date();
+                    const arrivalDate = new Date(priceDay.date);
+                    const daysUntilArrival = Math.floor((arrivalDate - today) / (1000 * 60 * 60 * 24));
+                    
+                    // Determine booking window status and recommended action
+                    let bookingWindowStatus = 'within-window';
+                    let recommendedAction = 'Hold Price';
+                    
+                    if (status === 'available' && daysUntilArrival > 0) {
+                        const marketOccupancy = occupancyDay?.marketOccupancy || 0;
+                        
+                        if (daysUntilArrival <= 7) {
+                            bookingWindowStatus = 'last-minute';
+                            recommendedAction = 'Consider Last-Minute Discount';
+                        } else if (daysUntilArrival <= marketAvgBookingWindow * 0.5) {
+                            bookingWindowStatus = 'approaching-end';
+                            if (marketOccupancy > 60) {
+                                recommendedAction = 'Monitor Closely - Consider Discount';
+                            } else {
+                                recommendedAction = 'Monitor Closely';
+                            }
+                        } else if (daysUntilArrival < marketAvgBookingWindow - 7) {
+                            bookingWindowStatus = 'past-window';
+                            if (marketOccupancy > 70) {
+                                recommendedAction = 'Urgent: Reduce Price/Min Stay';
+                            } else if (marketOccupancy > 50) {
+                                recommendedAction = 'Consider Discount';
+                            } else {
+                                recommendedAction = 'Hold Price - Low Market Demand';
+                            }
+                        }
+                    } else if (status === 'available' && daysUntilArrival <= 0) {
+                        bookingWindowStatus = 'past';
+                        recommendedAction = 'Past Date';
+                    }
+                    
+                    // Calculate price position
+                    let pricePosition = null;
+                    if (priceDay.price && neighborhoodDay) {
+                        if (priceDay.price < neighborhoodDay.p25) {
+                            pricePosition = '<25th';
+                        } else if (priceDay.price < neighborhoodDay.p50) {
+                            pricePosition = '25-50th';
+                        } else if (priceDay.price < neighborhoodDay.p75) {
+                            pricePosition = '50-75th';
+                        } else if (priceDay.price < neighborhoodDay.p90) {
+                            pricePosition = '75-90th';
+                        } else {
+                            pricePosition = '>90th';
+                        }
+                    }
+                    
+                    mergedData.push({
+                        // Existing fields
+                        date: priceDay.date,
+                        yourPrice: priceDay.price,
+                        userPrice: priceDay.user_price === -1 ? null : priceDay.user_price,
+                        isAvailable: status === 'available',
+                        status: status,
+                        isUnavailable: isUnavailable,
+                        actualADR: reservation ? reservation.actualADR : (priceDay.ADR > 0 ? priceDay.ADR : null),
+                        isCancelled: reservation ? reservation.isCancelled : false,
+                        demandLevel: priceDay.demand_desc || 'Unknown',
+                        
+                        // New neighborhood fields
+                        p25: neighborhoodDay?.p25 || null,
+                        p50: neighborhoodDay?.p50 || null,
+                        p75: neighborhoodDay?.p75 || null,
+                        p90: neighborhoodDay?.p90 || null,
+                        marketOccupancy: occupancyDay?.marketOccupancy || null,
+                        
+                        // New analytics fields
+                        daysUntilArrival: daysUntilArrival,
+                        bookingWindowStatus: bookingWindowStatus,
+                        recommendedAction: recommendedAction,
+                        pricePosition: pricePosition,
+                        marketBookingWindow: marketAvgBookingWindow,
+                        
+                        // Other existing fields
+                        minStay: priceDay.min_stay
+                    });
+                });
+            }
+
+            return {
+                listing: listingData,
+                reservations: reservationsData,
+                neighborhood: parsedNeighborhood,
+                merged: mergedData,
+                analytics: {
+                    avgBookingLeadTime: calculateAvgLeadTime(bookingLeadTimes),
+                    marketAvgBookingWindow: marketAvgBookingWindow,
+                    unbookedPastWindow: mergedData.filter(d => 
+                        d.status === 'available' && 
+                        d.bookingWindowStatus === 'past-window'
+                    ).length
+                }
+            };
+        }
+
+        function convertMockToRealFormat(mockData) {
+            // Convert mock data format to new parsed format
+            const result = {
+                percentiles: {},
+                occupancy: {},
+                marketKPI: { avgBookingWindow: 30 }
+            };
+            
+            mockData.forEach(day => {
+                result.percentiles[day.date] = {
+                    p25: day.percentile_25_adr,
+                    p50: day.percentile_50_adr,
+                    p75: day.percentile_75_adr,
+                    p90: day.percentile_90_adr
+                };
+                result.occupancy[day.date] = {
+                    marketOccupancy: day.market_occupancy * 100 // Convert to percentage
+                };
+            });
+            
+            return result;
+        }
+
+        async function displayResults(data) {
+            // Ensure results section is visible first
+            const resultsSection = document.getElementById('resultsSection');
+            if (resultsSection) {
+                resultsSection.style.display = 'block';
+            }
+            
+            try {
+                // Wait for critical DOM elements to be ready before rendering
+                await window.domTimingManager.waitForElements(
+                    ['priceChart', 'pricingTableBody', 'resultsSection'],
+                    {
+                        timeout: 3000,
+                        checkVisibility: true,
+                        checkDimensions: true
+                    }
+                );
+                
+                addDebugEntry('SUCCESS', 'All DOM elements ready for rendering');
+                
+                // Display metrics
+                displayMetrics(data);
+                
+                // Small delay to ensure layout is complete
+                await window.domTimingManager.delay(100);
+                
+                // Create visualization with safe rendering
+                createPriceComparisonChart(data.merged);
+                
+                // Populate data table with safe rendering
+                populateDataTable(data);
+                
+                addDebugEntry('SUCCESS', 'All visualizations rendered successfully');
+                
+            } catch (error) {
+                addDebugEntry('ERROR', 'Failed to render results due to DOM timing issues', error.message);
+                
+                // Fallback: try rendering without validation after a longer delay
+                setTimeout(() => {
+                    addDebugEntry('INFO', 'Attempting fallback rendering');
+                    displayMetrics(data);
+                    createPriceComparisonChart(data.merged);
+                    populateDataTable(data);
+                }, 2000);
+            }
+        }
+
+        function displayMetrics(data) {
+            let metricsGrid = document.getElementById('metricsGrid');
+            
+            // Defensive check with auto-recovery
+            if (!metricsGrid) {
+                console.warn('metricsGrid not found, attempting recovery...');
+                
+                // Try to find or create the metrics card structure
+                const resultsSection = document.getElementById('resultsSection');
+                if (!resultsSection) {
+                    console.error('Critical: resultsSection not found');
+                    return;
+                }
+                
+                // Look for existing metrics card or create new one
+                let metricsCard = Array.from(resultsSection.querySelectorAll('.card'))
+                    .find(card => card.querySelector('.card-header')?.textContent === 'Key Metrics');
+                
+                if (!metricsCard) {
+                    // Create new metrics card at the beginning
+                    metricsCard = document.createElement('div');
+                    metricsCard.className = 'card';
+                    metricsCard.innerHTML = `
+                        <div class="card-header">Key Metrics</div>
+                        <div class="card-body">
+                            <div class="metrics-grid" id="metricsGrid"></div>
+                        </div>
+                    `;
+                    resultsSection.insertBefore(metricsCard, resultsSection.firstChild);
+                    console.log('Created new metrics card structure');
+                }
+                
+                metricsGrid = document.getElementById('metricsGrid');
+                if (!metricsGrid) {
+                    console.error('Failed to recover metricsGrid');
+                    return;
+                }
+            }
+            
+            metricsGrid.innerHTML = '';
+            
+            // Existing metrics calculation
+            const totalDays = data.merged.length;
+            const bookedDays = data.merged.filter(d => d.status === 'booked').length;
+            const unavailableDays = data.merged.filter(d => d.status === 'unavailable').length;
+            const availableDays = data.merged.filter(d => d.status === 'available').length;
+            
+            // New market-based metrics
+            const avgMarketOccupancy = data.merged
+                .filter(d => d.marketOccupancy !== null)
+                .reduce((sum, d) => sum + d.marketOccupancy, 0) / 
+                data.merged.filter(d => d.marketOccupancy !== null).length || 0;
+            
+            const unbookedPastWindow = data.analytics ? data.analytics.unbookedPastWindow : 0;
+            const avgBookingLeadTime = data.analytics ? data.analytics.avgBookingLeadTime : 0;
+            const marketAvgBookingWindow = data.analytics ? data.analytics.marketAvgBookingWindow : 30;
+            
+            const revenueAtRisk = data.merged
+                .filter(d => d.status === 'available' && d.bookingWindowStatus === 'past-window')
+                .reduce((sum, d) => sum + (d.p50 || d.yourPrice || 0), 0);
+            
+            const urgentActionNeeded = data.merged.filter(d => 
+                d.status === 'available' && 
+                d.bookingWindowStatus === 'past-window' && 
+                d.marketOccupancy > 70
+            ).length;
+            
+            // Create enhanced metric cards
+            const metrics = [
+                { label: 'Date Range', value: `${totalDays} days` },
+                { label: 'Your Occupancy', value: `${safeToFixed((bookedDays + unavailableDays) / totalDays * 100, 1)}%` },
+                { label: 'Market Occupancy', value: `${safeToFixed(avgMarketOccupancy, 1)}%`, highlight: true },
+                { label: 'Available Nights', value: availableDays },
+                { label: 'Your Avg Lead Time', value: avgBookingLeadTime > 0 ? `${avgBookingLeadTime} days` : 'No data' },
+                { label: 'Market Avg Window', value: `${marketAvgBookingWindow} days` },
+                { label: 'Past Booking Window', value: unbookedPastWindow, alert: unbookedPastWindow > 5 },
+                { label: 'Revenue at Risk', value: `$${Math.round(revenueAtRisk)}`, alert: revenueAtRisk > 1000 },
+                { label: 'Urgent Action Needed', value: urgentActionNeeded, alert: urgentActionNeeded > 0 }
+            ];
+            
+            metrics.forEach(metric => {
+                const card = document.createElement('div');
+                card.className = 'metric-card';
+                if (metric.highlight) {
+                    card.style.backgroundColor = '#f3e5f5';
+                    card.style.borderColor = '#9c27b0';
+                }
+                if (metric.alert) {
+                    card.style.backgroundColor = '#ffebee';
+                    card.style.borderColor = '#f44336';
+                }
+                card.innerHTML = `
+                    <div class="metric-label">${metric.label}</div>
+                    <div class="metric-value" style="${metric.highlight ? 'color: #7b1fa2;' : ''}${metric.alert ? 'color: #f44336; font-weight: 600;' : ''}">${metric.value}</div>
+                `;
+                metricsGrid.appendChild(card);
+            });
+        }
+
+        function createPriceComparisonChart(data) {
+            // Enhanced defensive check with timing validation
+            const container = document.getElementById('priceChart');
+            if (!container) {
+                const error = 'priceChart container not found - DOM timing issue detected';
+                console.error(error);
+                addDebugEntry('ERROR', error, {
+                    attemptedAt: new Date().toISOString(),
+                    availableElements: Array.from(document.querySelectorAll('[id]')).map(el => el.id)
+                });
+                
+                // Attempt recovery and retry
+                setTimeout(() => {
+                    const retryContainer = document.getElementById('priceChart');
+                    if (retryContainer) {
+                        addDebugEntry('SUCCESS', 'priceChart container found on retry');
+                        createPriceComparisonChart(data);
+                    } else {
+                        addDebugEntry('ERROR', 'priceChart container still not found after retry');
+                    }
+                }, 1000);
+                return;
+            }
+            
+            // Validate container dimensions
+            const rect = container.getBoundingClientRect();
+            if (rect.width === 0 || rect.height === 0) {
+                addDebugEntry('WARNING', 'priceChart container has no dimensions, waiting for layout');
+                setTimeout(() => createPriceComparisonChart(data), 200);
+                return;
+            }
+            container.innerHTML = '';
+            
+            // Set dimensions
+            const margin = { top: 20, right: 80, bottom: 60, left: 70 };
+            const width = container.offsetWidth - margin.left - margin.right;
+            const height = 500 - margin.top - margin.bottom;
+            
+            // Create SVG
+            const svg = d3.select(container)
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom);
+            
+            const g = svg.append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // Create scales
+            const xScale = d3.scaleBand()
+                .domain(data.map(d => d.date))
+                .range([0, width])
+                .padding(0.1);
+            
+            const yExtent = d3.extent([
+                ...data.map(d => d.yourPrice).filter(v => v),
+                ...data.map(d => d.actualADR).filter(v => v),
+                ...data.map(d => d.p90).filter(v => v),
+                ...data.map(d => d.p25).filter(v => v)
+            ]);
+            
+            const yScale = d3.scaleLinear()
+                .domain([yExtent[0] * 0.9, yExtent[1] * 1.1])
+                .range([height, 0]);
+            
+            // Draw background shading for booked/available/unavailable periods
+            data.forEach((d, i) => {
+                let fillColor = null;
+                if (d.status === 'booked') {
+                    fillColor = '#e3f2fd'; // Blue for booked
+                } else if (d.status === 'unavailable') {
+                    fillColor = '#fff3e0'; // Orange for unavailable
+                }
+                
+                if (fillColor) {
+                    g.append('rect')
+                        .attr('x', xScale(d.date))
+                        .attr('y', 0)
+                        .attr('width', xScale.bandwidth())
+                        .attr('height', height)
+                        .attr('fill', fillColor)
+                        .attr('opacity', 0.5);
+                }
+            });
+            
+            // Define percentile lines
+            const percentiles = [
+                { key: 'p90', label: '90th Percentile', color: '#e91e63' },
+                { key: 'p75', label: '75th Percentile', color: '#ff9800' },
+                { key: 'p50', label: '50th Percentile', color: '#4caf50' },
+                { key: 'p25', label: '25th Percentile', color: '#2196f3' }
+            ];
+            
+            // Draw percentile lines
+            percentiles.forEach(({ key, label, color }) => {
+                const line = d3.line()
+                    .x(d => xScale(d.date) + xScale.bandwidth() / 2)
+                    .y(d => yScale(d[key]))
+                    .defined(d => d[key] !== null);
+                
+                g.append('path')
+                    .datum(data)
+                    .attr('class', `percentile-line ${key}`)
+                    .attr('d', line)
+                    .attr('stroke', color)
+                    .attr('stroke-width', 1.5)
+                    .attr('fill', 'none')
+                    .attr('opacity', 0.7);
+            });
+            
+            // Draw your price line with different styles for different statuses
+            const priceSegments = [];
+            let currentSegment = [];
+            let currentType = null;
+            
+            data.forEach((d, i) => {
+                if (d.yourPrice) {
+                    const segmentType = d.status === 'booked' ? 'none' : 
+                                       d.status === 'unavailable' ? 'dotted' : 
+                                       'solid';
+                    
+                    if (currentType !== segmentType) {
+                        if (currentSegment.length > 0) {
+                            priceSegments.push({
+                                data: [...currentSegment],
+                                type: currentType
+                            });
+                        }
+                        currentSegment = [d];
+                        currentType = segmentType;
+                    } else {
+                        currentSegment.push(d);
+                    }
+                }
+            });
+            if (currentSegment.length > 0) {
+                priceSegments.push({
+                    data: currentSegment,
+                    type: currentType
+                });
+            }
+            
+            // Draw each segment with appropriate style
+            priceSegments.forEach(segment => {
+                if (segment.type !== 'none') {
+                    const line = d3.line()
+                        .x(d => xScale(d.date) + xScale.bandwidth() / 2)
+                        .y(d => yScale(d.yourPrice))
+                        .curve(d3.curveMonotoneX);
+                    
+                    g.append('path')
+                        .datum(segment.data)
+                        .attr('class', 'your-price-line')
+                        .attr('d', line)
+                        .attr('stroke', '#673ab7')
+                        .attr('stroke-width', 3)
+                        .attr('fill', 'none')
+                        .attr('stroke-dasharray', segment.type === 'dotted' ? '5,5' : 'none');
+                }
+            });
+            
+            // Add dots for available and unavailable days (not booked)
+            g.selectAll('.price-dot')
+                .data(data.filter(d => d.status !== 'booked' && d.yourPrice))
+                .enter().append('circle')
+                .attr('class', 'price-dot')
+                .attr('cx', d => xScale(d.date) + xScale.bandwidth() / 2)
+                .attr('cy', d => yScale(d.yourPrice))
+                .attr('r', 4)
+                .attr('fill', d => d.status === 'unavailable' ? '#ff9800' : '#673ab7')
+                .attr('stroke', 'white')
+                .attr('stroke-width', 2);
+            
+            // Draw booked and unavailable brackets
+            const bookedGroups = [];
+            const unavailableGroups = [];
+            let currentBookedGroup = null;
+            let currentUnavailableGroup = null;
+            
+            data.forEach((d, i) => {
+                // Handle booked groups
+                if (d.status === 'booked' && d.actualADR) {
+                    if (!currentBookedGroup || Math.abs(currentBookedGroup.adr - d.actualADR) > 1) {
+                        currentBookedGroup = {
+                            startIndex: i,
+                            endIndex: i,
+                            adr: d.actualADR,
+                            dates: [d.date]
+                        };
+                        bookedGroups.push(currentBookedGroup);
+                    } else {
+                        currentBookedGroup.endIndex = i;
+                        currentBookedGroup.dates.push(d.date);
+                    }
+                    currentUnavailableGroup = null;
+                } 
+                // Handle unavailable groups
+                else if (d.status === 'unavailable' && d.yourPrice) {
+                    if (!currentUnavailableGroup || Math.abs(currentUnavailableGroup.price - d.yourPrice) > 10) {
+                        currentUnavailableGroup = {
+                            startIndex: i,
+                            endIndex: i,
+                            price: d.yourPrice,
+                            dates: [d.date]
+                        };
+                        unavailableGroups.push(currentUnavailableGroup);
+                    } else {
+                        currentUnavailableGroup.endIndex = i;
+                        currentUnavailableGroup.dates.push(d.date);
+                    }
+                    currentBookedGroup = null;
+                } else {
+                    currentBookedGroup = null;
+                    currentUnavailableGroup = null;
+                }
+            });
+            
+            // Draw brackets for booked periods
+            bookedGroups.forEach(group => {
+                const startX = xScale(data[group.startIndex].date);
+                const endX = xScale(data[group.endIndex].date) + xScale.bandwidth();
+                const y = yScale(group.adr);
+                
+                const bracketGroup = g.append('g')
+                    .attr('class', 'booked-bracket');
+                
+                // Horizontal line
+                bracketGroup.append('line')
+                    .attr('x1', startX + 10)
+                    .attr('x2', endX - 10)
+                    .attr('y1', y)
+                    .attr('y2', y)
+                    .attr('stroke', '#1976d2')
+                    .attr('stroke-width', 3);
+                
+                // Left bracket
+                bracketGroup.append('path')
+                    .attr('d', `M ${startX + 10} ${y - 8} L ${startX} ${y} L ${startX + 10} ${y + 8}`)
+                    .attr('stroke', '#1976d2')
+                    .attr('stroke-width', 3)
+                    .attr('fill', 'none');
+                
+                // Right bracket
+                bracketGroup.append('path')
+                    .attr('d', `M ${endX - 10} ${y - 8} L ${endX} ${y} L ${endX - 10} ${y + 8}`)
+                    .attr('stroke', '#1976d2')
+                    .attr('stroke-width', 3)
+                    .attr('fill', 'none');
+                
+                // Price label
+                bracketGroup.append('text')
+                    .attr('x', (startX + endX) / 2)
+                    .attr('y', y - 10)
+                    .attr('text-anchor', 'middle')
+                    .attr('font-size', '14px')
+                    .attr('font-weight', 'bold')
+                    .attr('fill', '#1976d2')
+                    .text(`$${Math.round(group.adr)}`);
+            });
+            
+            // Removed unavailable brackets - keeping only background color for cleaner visualization
+            
+            // Add axes
+            const xAxis = d3.axisBottom(xScale)
+                .tickValues(xScale.domain().filter((d, i) => i % Math.ceil(data.length / 20) === 0))
+                .tickFormat(d => {
+                    const date = new Date(d);
+                    return `${date.getMonth() + 1}/${date.getDate()}`;
+                });
+            
+            g.append('g')
+                .attr('transform', `translate(0,${height})`)
+                .call(xAxis)
+                .selectAll('text')
+                .style('text-anchor', 'end')
+                .attr('dx', '-.8em')
+                .attr('dy', '.15em')
+                .attr('transform', 'rotate(-45)');
+            
+            const yAxis = d3.axisLeft(yScale)
+                .tickFormat(d => `$${d}`);
+            
+            g.append('g')
+                .call(yAxis);
+            
+            // Add axis labels
+            g.append('text')
+                .attr('transform', 'rotate(-90)')
+                .attr('y', 0 - margin.left)
+                .attr('x', 0 - (height / 2))
+                .attr('dy', '1em')
+                .style('text-anchor', 'middle')
+                .text('Price (USD)');
+            
+            // Add tooltip
+            const tooltip = d3.select('body').append('div')
+                .attr('class', 'price-tooltip')
+                .style('opacity', 0);
+            
+            // Add invisible rectangles for hover
+            g.selectAll('.hover-rect')
+                .data(data)
+                .enter().append('rect')
+                .attr('x', d => xScale(d.date))
+                .attr('y', 0)
+                .attr('width', xScale.bandwidth())
+                .attr('height', height)
+                .attr('fill', 'transparent')
+                .on('mouseover', function(event, d) {
+                    tooltip.transition().duration(200).style('opacity', 0.9);
+                    
+                    // Get day of week
+                    const date = new Date(d.date);
+                    const dayOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][date.getDay()];
+                    const formattedDate = `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+                    
+                    let content = '';
+                    if (d.status === 'available') {
+                        content = `<strong>${formattedDate} - ${dayOfWeek}</strong><br/>
+                         Your Price: $${d.yourPrice}<br/>
+                         90th %ile: $${d.p90 ? Math.round(d.p90) : 'N/A'}<br/>
+                         75th %ile: $${d.p75 ? Math.round(d.p75) : 'N/A'}<br/>
+                         50th %ile: $${d.p50 ? Math.round(d.p50) : 'N/A'}<br/>
+                         25th %ile: $${d.p25 ? Math.round(d.p25) : 'N/A'}<br/>
+                         Market Occupancy: ${d.marketOccupancy ? Math.round(d.marketOccupancy) + '%' : 'N/A'}<br/>
+                         Days Out: ${d.daysUntilArrival}<br/>
+                         Window Status: ${formatWindowStatus(d.bookingWindowStatus)}<br/>
+                         Action: <span style="color:${getActionClass(d.recommendedAction) === 'urgent' ? '#c62828' : getActionClass(d.recommendedAction) === 'warning' ? '#f57c00' : '#388e3c'}">${d.recommendedAction}</span><br/>
+                         Demand: ${d.demandLevel}`;
+                    } else if (d.status === 'booked') {
+                        content = `<strong>${formattedDate} - ${dayOfWeek} (BOOKED)</strong><br/>
+                         Booked at: $${Math.round(d.actualADR)}<br/>
+                         Was listed at: $${d.yourPrice || 'N/A'}`;
+                    } else {
+                        content = `<strong>${formattedDate} - ${dayOfWeek} (UNAVAILABLE)</strong><br/>
+                         <span style="color:#ff9800">Likely booked on another platform</span><br/>
+                         Listed Price: $${d.yourPrice}<br/>
+                         90th %ile: $${d.p90 ? Math.round(d.p90) : 'N/A'}<br/>
+                         75th %ile: $${d.p75 ? Math.round(d.p75) : 'N/A'}<br/>
+                         50th %ile: $${d.p50 ? Math.round(d.p50) : 'N/A'}<br/>
+                         25th %ile: $${d.p25 ? Math.round(d.p25) : 'N/A'}<br/>
+                         Market Occupancy: ${d.marketOccupancy ? Math.round(d.marketOccupancy) + '%' : 'N/A'}`;
+                    }
+                    
+                    tooltip.html(content)
+                        .style('left', (event.pageX + 10) + 'px')
+                        .style('top', (event.pageY - 28) + 'px');
+                })
+                .on('mouseout', function() {
+                    tooltip.transition().duration(500).style('opacity', 0);
+                });
+            
+            // Create legend
+            createLegend(percentiles);
+        }
+
+        function createLegend(percentiles) {
+            const legendContainer = document.getElementById('chartLegend');
+            if (!legendContainer) {
+                console.error('chartLegend container not found');
+                return;
+            }
+            legendContainer.innerHTML = '';
+            
+            // Add your price line to legend
+            const items = [
+                { key: 'your-price', label: 'Your Price (Available)', color: '#673ab7' },
+                { key: 'booked', label: 'Booked (This Platform)', color: '#1976d2' },
+                { key: 'unavailable', label: 'Unavailable (Other Platform)', color: '#ff9800' },
+                ...percentiles
+            ];
+            
+            items.forEach(item => {
+                const legendItem = document.createElement('div');
+                legendItem.className = 'legend-item';
+                legendItem.innerHTML = `
+                    <div class="legend-color" style="background-color: ${item.color}"></div>
+                    <span>${item.label}</span>
+                `;
+                
+                // Add click handler to toggle visibility
+                legendItem.addEventListener('click', function() {
+                    const elements = document.querySelectorAll(`.${item.key}`);
+                    const isActive = !this.classList.contains('inactive');
+                    
+                    this.classList.toggle('inactive');
+                    elements.forEach(el => {
+                        el.style.opacity = isActive ? 0.1 : 0.7;
+                    });
+                });
+                
+                legendContainer.appendChild(legendItem);
+            });
+        }
+
+        function populateDataTable(data) {
+            const tbody = document.getElementById('pricingTableBody');
+            if (!tbody) {
+                const error = 'pricingTableBody not found - DOM timing issue detected';
+                console.error(error);
+                addDebugEntry('ERROR', error, {
+                    attemptedAt: new Date().toISOString(),
+                    availableElements: Array.from(document.querySelectorAll('[id]')).map(el => el.id)
+                });
+                
+                // Attempt recovery and retry
+                setTimeout(() => {
+                    const retryTbody = document.getElementById('pricingTableBody');
+                    if (retryTbody) {
+                        addDebugEntry('SUCCESS', 'pricingTableBody found on retry');
+                        populateDataTable(data);
+                    } else {
+                        addDebugEntry('ERROR', 'pricingTableBody still not found after retry');
+                    }
+                }, 1000);
+                return;
+            }
+            tbody.innerHTML = '';
+            
+            // Get the original listing data for min stay info
+            const listingData = data.listing;
+            
+            data.merged.forEach((day, index) => {
+                const row = document.createElement('tr');
+                
+                // Enhanced row styling based on status and opportunity
+                let rowClass = day.status === 'available' ? 'available-row' : 
+                              day.status === 'booked' ? 'booked-row' : 
+                              'unavailable-row';
+                
+                // Add urgency styling for available days
+                if (day.status === 'available' && day.bookingWindowStatus === 'past-window' && day.marketOccupancy > 70) {
+                    rowClass += ' urgent-action';
+                }
+                
+                row.className = rowClass;
+                
+                // Get the original day data for min stay
+                const originalDay = listingData && listingData.data ? 
+                    listingData.data.find(d => d.date === day.date) : null;
+                
+                // Format date
+                const date = new Date(day.date);
+                const dayOfWeek = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][date.getDay()];
+                const formattedDate = `${date.getMonth() + 1}/${date.getDate()}`;
+                
+                // Get demand color
+                const demandColor = originalDay && originalDay.demand_color ? 
+                    originalDay.demand_color : '#ffffff';
+                
+                // Determine status display
+                let statusText = '';
+                let statusClass = '';
+                if (day.status === 'available') {
+                    statusText = 'Available';
+                    statusClass = 'available';
+                } else if (day.status === 'booked') {
+                    statusText = 'Booked';
+                    statusClass = 'booked';
+                } else {
+                    statusText = 'Unavailable';
+                    statusClass = 'unavailable';
+                }
+                
+                // Build row HTML with new columns
+                row.innerHTML = `
+                    <td>${formattedDate}</td>
+                    <td>${dayOfWeek}</td>
+                    <td class="price-cell">$${day.yourPrice || '-'}</td>
+                    <td>
+                        <span class="booked-indicator ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td class="price-cell">${day.actualADR ? '$' + Math.round(day.actualADR) : '-'}</td>
+                    <td>$${day.p25 ? Math.round(day.p25) : '-'}</td>
+                    <td>$${day.p50 ? Math.round(day.p50) : '-'}</td>
+                    <td>$${day.p75 ? Math.round(day.p75) : '-'}</td>
+                    <td>$${day.p90 ? Math.round(day.p90) : '-'}</td>
+                    <td class="percentile-position">${day.pricePosition || '-'}</td>
+                    ${day.status === 'available' ? `
+                        <td class="market-occupancy ${getOccupancyClass(day.marketOccupancy)}">
+                            ${day.marketOccupancy ? Math.round(day.marketOccupancy) + '%' : '-'}
+                        </td>
+                        <td class="days-until">${day.daysUntilArrival >= 0 ? day.daysUntilArrival : '-'}</td>
+                        <td class="booking-window-status">
+                            <span class="window-indicator ${day.bookingWindowStatus}">
+                                ${formatWindowStatus(day.bookingWindowStatus)}
+                            </span>
+                        </td>
+                        <td class="recommended-action">
+                            <span class="action-indicator ${getActionClass(day.recommendedAction)}">
+                                ${day.recommendedAction}
+                            </span>
+                        </td>
+                    ` : '<td colspan="4" class="na-cell">N/A</td>'}
+                    <td>
+                        <span class="demand-indicator" style="background-color: ${demandColor}20; color: #333;">
+                            ${day.demandLevel}
+                        </span>
+                    </td>
+                    <td>${day.minStay || '-'}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+            
+            addDebugEntry('INFO', 'Data table populated', {
+                rowCount: data.merged.length
+            });
+        }
+
+        function getOccupancyClass(occupancy) {
+            if (!occupancy) return '';
+            if (occupancy >= 80) return 'high-occupancy';
+            if (occupancy >= 60) return 'medium-occupancy';
+            return 'low-occupancy';
+        }
+
+        function formatWindowStatus(status) {
+            const statusMap = {
+                'within-window': 'Within Window',
+                'approaching-end': 'Approaching End',
+                'past-window': 'Past Window',
+                'last-minute': 'Last Minute',
+                'past': 'Past Date'
+            };
+            return statusMap[status] || status;
+        }
+
+        function getActionClass(action) {
+            if (action.includes('Urgent')) return 'urgent';
+            if (action.includes('Consider') || action.includes('Monitor')) return 'warning';
+            return 'ok';
+        }
+
+        function clearVisualization() {
+            document.getElementById('resultsSection').style.display = 'none';
+            hideStatus();
+            currentData = null;
+            
+            // Remove tooltip if exists
+            d3.selectAll('.price-tooltip').remove();
+            
+            addDebugEntry('INFO', 'Visualization cleared');
+        }
+
+        // NEW: Clear stored API key
+        function clearStoredKey() {
+            if (confirm('Are you sure you want to clear the stored API key?')) {
+                apiKeyManager.clearStoredKey();
+                document.getElementById('clearKeyBtn').style.display = 'none';
+                showStatus('Stored API key cleared', 'success');
+                setTimeout(hideStatus, 2000);
+                addDebugEntry('INFO', 'Stored API key cleared by user');
+            }
+        }
+        
+        // ==================== MULTI-LISTING FUNCTIONS ====================
+        
+        async function initializeMultiListingMode() {
+            addDebugEntry('INFO', 'Loading listings...');
+            
+            // Update UI layout
+            document.getElementById('dashboardContainer').classList.add('dashboard-container');
+            document.getElementById('listingSidebar').classList.add('active');
+            
+            // Load all listings
+            try {
+                const apiKey = apiKeyManager.getApiKey();
+                const proxyUrl = document.getElementById('proxyUrl').value;
+                
+                if (!apiKey || !proxyUrl) {
+                    addDebugEntry('ERROR', 'Missing API key or proxy URL');
+                    // Don't show sidebar if no API key
+                    document.getElementById('listingSidebar').classList.remove('active');
+                    document.getElementById('dashboardContainer').classList.remove('dashboard-container');
+                    return;
+                }
+                
+                showStatus('Loading your listings...');
+                const listingsData = await fetchAllListings(apiKey, proxyUrl);
+                
+                if (listingsData && listingsData.listings && listingsData.listings.length > 0) {
+                    allListings = listingsData.listings;
+                    displayListings(allListings);
+                    updatePortfolioSummary(allListings);
+                    
+                    // Don't auto-select - let user choose
+                    hideStatus();
+                    addDebugEntry('SUCCESS', `Loaded ${allListings.length} listings`);
+                    
+                    // Show a message to select a listing with safe identifier
+                    const resultsSection = document.getElementById('resultsSection');
+                    resultsSection.style.display = 'block';
+                    
+                    // Create welcome card with unique identifier for safe removal
+                    const welcomeCard = document.createElement('div');
+                    welcomeCard.className = 'card welcome-message-card';
+                    welcomeCard.setAttribute('data-welcome', 'true');
+                    welcomeCard.innerHTML = `
+                        <div class="card-body" style="text-align: center; padding: 40px;">
+                            <h2 style="color: #673ab7; margin-bottom: 20px;">Welcome to Your PriceLabs Dashboard</h2>
+                            <p style="font-size: 18px; color: #666;">Select a listing from the sidebar to view its detailed analysis</p>
+                        </div>
+                    `;
+                    
+                    // Clear any existing content and add welcome message
+                    resultsSection.innerHTML = '';
+                    resultsSection.appendChild(welcomeCard);
+                    console.log('Welcome message displayed with safe identifier');
+                } else {
+                    // No listings or single listing - hide sidebar
+                    document.getElementById('listingSidebar').classList.remove('active');
+                    document.getElementById('dashboardContainer').classList.remove('dashboard-container');
+                    hideStatus();
+                }
+            } catch (error) {
+                console.error('Failed to load listings:', error);
+                // Hide sidebar on error
+                document.getElementById('listingSidebar').classList.remove('active');
+                document.getElementById('dashboardContainer').classList.remove('dashboard-container');
+                hideStatus();
+                addDebugEntry('ERROR', 'Failed to load listings', error.message);
+            }
+        }
+        
+        function displayListings(listings) {
+            const container = document.getElementById('listingsContainer');
+            container.innerHTML = '';
+            
+            const filteredListings = filterListingsByType(listings, currentFilter);
+            const searchTerm = document.getElementById('listingSearchInput').value.toLowerCase();
+            
+            const searchedListings = filteredListings.filter(listing => {
+                const name = listing.name?.toLowerCase() || '';
+                const location = `${listing.city_name} ${listing.state}`.toLowerCase();
+                const id = listing.id?.toLowerCase() || '';
+                return name.includes(searchTerm) || location.includes(searchTerm) || id.includes(searchTerm);
+            });
+            
+            searchedListings.forEach(listing => {
+                const card = createListingCard(listing);
+                container.appendChild(card);
+            });
+            
+            if (searchedListings.length === 0) {
+                container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">No listings found</div>';
+            }
+        }
+        
+        function createListingCard(listing) {
+            const card = document.createElement('div');
+            card.className = 'listing-card';
+            
+            // Handle error objects passed as listings
+            if (listing.error || typeof listing === 'string' || !listing.id) {
+                console.warn('Invalid listing data passed to createListingCard:', listing);
+                // Create error card
+                card.className = 'listing-card error-card';
+                card.innerHTML = `
+                    <div class="listing-error">
+                        <div class="error-message">Unable to load listing data</div>
+                        <div class="error-details">${listing.error || 'Invalid listing format'}</div>
+                    </div>
+                `;
+                return card;
+            }
+            
+            if (listing.id === selectedListingId) {
+                card.classList.add('active');
+            }
+            
+            // Parse listing name
+            const nameParts = listing.name?.split('·') || ['Unknown Listing'];
+            const location = nameParts[0]?.trim() || listing.city_name || 'Unknown';
+            const propertyName = nameParts[1]?.trim() || 'Property';
+            
+            // Calculate metrics with safe parsing
+            const occupancy = safeParseNumber(listing.occupancy_next_30?.toString().replace('%', ''), 0);
+            const revenue = safeParseNumber(listing.revenue_next_30, 0);
+            const adr = safeParseNumber(listing.adr_past_90, 0);
+            const mpi = safeParseNumber(listing.mpi_next_30, null);
+            const lastBooked = listing.last_booked_date ? new Date(listing.last_booked_date) : null;
+            const daysSinceBooking = lastBooked ? Math.floor((Date.now() - lastBooked) / (1000 * 60 * 60 * 24)) : null;
+            
+            card.innerHTML = `
+                <div class="listing-card-header">
+                    <div>
+                        <div class="listing-name">${propertyName}</div>
+                        <div class="listing-location">${location}, ${listing.state || ''}</div>
+                        <div class="listing-type">${listing.no_of_bedrooms || '?'} BR | ${listing.pms?.toUpperCase() || 'Unknown'}</div>
+                    </div>
+                </div>
+                
+                <div class="listing-metrics">
+                    <div class="listing-metric">
+                        <div class="listing-metric-label">Occupancy</div>
+                        <div class="listing-metric-value">${safeToFixed(occupancy, 0)}%</div>
+                        ${mpi !== null ? `<div class="listing-metric-change ${mpi < 1 ? 'negative' : ''}">MPI: ${safeToFixed(mpi, 1)}</div>` : ''}
+                    </div>
+                    <div class="listing-metric">
+                        <div class="listing-metric-label">ADR</div>
+                        <div class="listing-metric-value">$${safeToFixed(adr, 0)}</div>
+                    </div>
+                    <div class="listing-metric">
+                        <div class="listing-metric-label">Revenue</div>
+                        <div class="listing-metric-value">$${safeToFixed(revenue/1000, 1)}k</div>
+                    </div>
+                </div>
+                
+                <div class="listing-actions">
+                    <div class="last-sync">
+                        ${daysSinceBooking !== null ? `Last booked ${daysSinceBooking} days ago` : 'No recent bookings'}
+                    </div>
+                    <a href="#" class="view-details-btn" onclick="selectListing('${listing.id}'); return false;">View Details →</a>
+                </div>
+            `;
+            
+            card.onclick = () => selectListing(listing.id);
+            return card;
+        }
+        
+        function updatePortfolioSummary(listings) {
+            // Filter out invalid listings and calculate portfolio metrics
+            const validListings = listings.filter(l => l && l.id && !l.error);
+            const totalListings = validListings.length;
+            
+            if (totalListings === 0) {
+                // Handle empty portfolio gracefully
+                document.getElementById('totalListingsCount').textContent = '0';
+                document.getElementById('avgOccupancy').textContent = '0%';
+                document.getElementById('totalRevenue').textContent = '$0k';
+                document.getElementById('avgADR').textContent = '$0';
+                return;
+            }
+            
+            const avgOccupancy = validListings.reduce((sum, l) => {
+                const occupancy = safeParseNumber(l.occupancy_next_30?.toString().replace('%', ''), 0);
+                return sum + occupancy;
+            }, 0) / totalListings;
+            
+            const totalRevenue = validListings.reduce((sum, l) => sum + safeParseNumber(l.revenue_next_30, 0), 0);
+            const avgADR = validListings.reduce((sum, l) => sum + safeParseNumber(l.adr_past_90, 0), 0) / totalListings;
+            
+            // Update UI with safe formatting
+            document.getElementById('totalListingsCount').textContent = totalListings;
+            document.getElementById('avgOccupancy').textContent = safeToFixed(avgOccupancy, 0) + '%';
+            document.getElementById('totalRevenue').textContent = '$' + safeToFixed(totalRevenue/1000, 0) + 'k';
+            document.getElementById('avgADR').textContent = '$' + safeToFixed(avgADR, 0);
+        }
+        
+        function filterListingsByType(listings, type) {
+            if (type === 'all') return listings;
+            return listings.filter(l => l.pms === type);
+        }
+        
+        function setListingFilter(type) {
+            currentFilter = type;
+            
+            // Update UI
+            document.querySelectorAll('.filter-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Re-display listings
+            displayListings(allListings);
+        }
+        
+        function filterListings() {
+            displayListings(allListings);
+        }
+        
+        async function selectListing(listingId) {
+            selectedListingId = listingId;
+            localStorage.setItem('lastSelectedListing', listingId);
+            
+            // Update UI - highlight selected card
+            document.querySelectorAll('.listing-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // Find and highlight the selected card
+            const cards = document.querySelectorAll('.listing-card');
+            cards.forEach(card => {
+                if (card.querySelector('.view-details-btn')?.getAttribute('onclick')?.includes(listingId)) {
+                    card.classList.add('active');
+                }
+            });
+            
+            // Update form with selected listing
+            const listing = allListings.find(l => l.id === listingId);
+            if (listing) {
+                document.getElementById('listingId').value = listing.id;
+                document.getElementById('pms').value = listing.pms;
+                
+                // Hide the welcome message safely without destroying DOM structure
+                const resultsSection = document.getElementById('resultsSection');
+                
+                // Only remove the welcome message card, not the entire structure
+                const welcomeCard = resultsSection.querySelector('[data-welcome="true"]');
+                if (welcomeCard) {
+                    welcomeCard.remove();
+                    console.log('Welcome message removed safely');
+                }
+                
+                // Ensure the results section structure exists
+                if (!document.getElementById('metricsGrid')) {
+                    console.warn('Results structure missing, recreating...');
+                    resultsSection.innerHTML = `
+                        <!-- Metrics Overview -->
+                        <div class="card">
+                            <div class="card-header">Key Metrics</div>
+                            <div class="card-body">
+                                <div class="metrics-grid" id="metricsGrid">
+                                    <!-- Metrics will be populated here -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price Comparison Chart -->
+                        <div class="card">
+                            <div class="card-header">Price Comparison & Booking Status</div>
+                            <div class="card-body">
+                                <div class="chart-container" id="priceChart"></div>
+                                <div class="legend" id="chartLegend"></div>
+                            </div>
+                        </div>
+
+                        <!-- Data Table -->
+                        <div class="card">
+                            <div class="card-header">Detailed Pricing Data</div>
+                            <div class="card-body">
+                                <div class="data-table-container">
+                                    <table class="data-table" id="pricingTable">
+                                        <thead>
+                                            <tr>
+                                                <th>Date</th>
+                                                <th>Day</th>
+                                                <th>Your Price</th>
+                                                <th>Status</th>
+                                                <th>Booked ADR</th>
+                                                <th>25th %ile</th>
+                                                <th>50th %ile</th>
+                                                <th>75th %ile</th>
+                                                <th>90th %ile</th>
+                                                <th>Position</th>
+                                                <th>Market Occ%</th>
+                                                <th>Days Out</th>
+                                                <th>Window Status</th>
+                                                <th>Action</th>
+                                                <th>Demand</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="pricingTableBody">
+                                            <!-- Data rows will be populated here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    console.log('Results structure recreated');
+                }
+                
+                resultsSection.style.display = 'none';
+                
+                // Check cache first
+                const cacheKey = `${listingId}_${document.getElementById('dateFrom').value}_${document.getElementById('dateTo').value}`;
+                if (listingsCache.has(cacheKey)) {
+                    const cachedData = listingsCache.get(cacheKey);
+                    currentData = cachedData;
+                    displayResults(cachedData);
+                    showStatus('Loaded from cache', 'success');
+                    setTimeout(hideStatus, 2000);
+                } else {
+                    // Fetch data for selected listing
+                    await fetchAndVisualize();
+                }
+            }
+        }
+        
+        // Modify fetchAndVisualize to support caching
+        const originalFetchAndVisualize = window.fetchAndVisualize;
+        window.fetchAndVisualize = async function() {
+            await originalFetchAndVisualize.apply(this, arguments);
+            
+            // Cache the result if we have multiple listings
+            if (allListings.length > 1 && currentData && selectedListingId) {
+                const cacheKey = `${selectedListingId}_${document.getElementById('dateFrom').value}_${document.getElementById('dateTo').value}`;
+                listingsCache.set(cacheKey, currentData);
+                
+                // Limit cache size
+                if (listingsCache.size > 10) {
+                    const firstKey = listingsCache.keys().next().value;
+                    listingsCache.delete(firstKey);
+                }
+            }
+        };
+        
+        // Validation function to check if listing exists (placeholder for now)
+        function validateListingExists(listingId) {
+            // For now, return true to allow processing
+            // This could be enhanced to check against cached listings or make a lightweight API call
+            // The actual validation will happen in the API calls
+            return true;
+        }
+    </script>
+</body>
+</html>

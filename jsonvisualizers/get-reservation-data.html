@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservation Data Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header-meta {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .header-meta span {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .metrics-container {
+            padding: 30px;
+            background: #f8fafc;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .metric-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            text-align: center;
+            transition: transform 0.2s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            color: #64748b;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-card.revenue .metric-value { color: #10b981; }
+        .metric-card.average .metric-value { color: #3b82f6; }
+        .metric-card.bookings .metric-value { color: #f59e0b; }
+        .metric-card.cancelled .metric-value { color: #ef4444; }
+
+        .controls {
+            padding: 30px;
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+
+        .control-group select,
+        .control-group input {
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.2s ease;
+        }
+
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .view-toggles {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .toggle-btn {
+            padding: 10px 20px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .toggle-btn.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .content-area {
+            padding: 30px;
+            min-height: 400px;
+        }
+
+        .reservations-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .reservation-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .reservation-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border-color: #3b82f6;
+        }
+
+        .reservation-card.cancelled {
+            border-left: 4px solid #ef4444;
+            background: #fef2f2;
+        }
+
+        .reservation-card.booked {
+            border-left: 4px solid #10b981;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .listing-name {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #1f2937;
+            line-height: 1.4;
+            flex: 1;
+            margin-right: 15px;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .status-badge.booked {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.cancelled {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .reservation-id {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .dates-section {
+            background: #f8fafc;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+        }
+
+        .check-dates {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nights-badge {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+
+        .financial-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+
+        .financial-item {
+            text-align: center;
+            padding: 12px;
+            background: #f1f5f9;
+            border-radius: 8px;
+        }
+
+        .financial-value {
+            font-weight: 700;
+            font-size: 1.2rem;
+            color: #1f2937;
+        }
+
+        .financial-label {
+            color: #64748b;
+            font-size: 0.8rem;
+            margin-top: 2px;
+        }
+
+        .cleaning-fee {
+            background: #fef3c7;
+            color: #92400e;
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+
+        .booking-details {
+            color: #64748b;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .table-view {
+            display: none;
+            overflow-x: auto;
+        }
+
+        .table-view.active {
+            display: block;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .data-table th {
+            background: #1f2937;
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .data-table th:hover {
+            background: #374151;
+        }
+
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+            font-size: 0.9rem;
+        }
+
+        .data-table tr:hover {
+            background: #f8fafc;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 30px;
+            padding: 20px;
+        }
+
+        .pagination button {
+            padding: 10px 20px;
+            border: 2px solid #e2e8f0;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+        }
+
+        .pagination button:hover:not(:disabled) {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+        }
+
+        .no-results h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 25px;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            transition: border-color 0.2s ease;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .header-meta {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .metrics-container,
+            .controls,
+            .content-area {
+                padding: 20px;
+            }
+
+            .reservations-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .controls-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .financial-info {
+                grid-template-columns: 1fr;
+            }
+
+            .view-toggles {
+                justify-content: center;
+            }
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            font-size: 1.1rem;
+            color: #64748b;
+        }
+
+        .property-group {
+            margin-bottom: 30px;
+        }
+
+        .property-header {
+            background: #1f2937;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px 10px 0 0;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .property-stats {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .property-reservations {
+            border: 1px solid #e2e8f0;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
+            padding: 20px;
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🏠 Reservation Data Dashboard</h1>
+            <div class="header-meta">
+                <span>📊 PMS: <strong id="pms-name">Airbnb</strong></span>
+                <span>📈 Total Reservations: <strong id="total-count">0</strong></span>
+                <span>📄 Next Page Available: <strong id="next-page">No</strong></span>
+            </div>
+        </div>
+
+        <div class="metrics-container">
+            <div class="metrics-grid">
+                <div class="metric-card revenue">
+                    <div class="metric-value" id="total-revenue">$0</div>
+                    <div class="metric-label">Total Revenue</div>
+                </div>
+                <div class="metric-card average">
+                    <div class="metric-value" id="avg-daily-rate">$0</div>
+                    <div class="metric-label">Avg Daily Rate</div>
+                </div>
+                <div class="metric-card bookings">
+                    <div class="metric-value" id="active-bookings">0</div>
+                    <div class="metric-label">Active Bookings</div>
+                </div>
+                <div class="metric-card cancelled">
+                    <div class="metric-value" id="cancellation-rate">0%</div>
+                    <div class="metric-label">Cancellation Rate</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <input type="text" class="search-box" id="search-input" placeholder="🔍 Search reservations, properties, or IDs...">
+            
+            <div class="controls-grid">
+                <div class="control-group">
+                    <label for="status-filter">Booking Status</label>
+                    <select id="status-filter">
+                        <option value="">All Statuses</option>
+                        <option value="booked">Booked</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="property-filter">Property</label>
+                    <select id="property-filter">
+                        <option value="">All Properties</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="sort-by">Sort By</label>
+                    <select id="sort-by">
+                        <option value="check_in">Check-in Date</option>
+                        <option value="rental_revenue">Revenue (High to Low)</option>
+                        <option value="rental_revenue_asc">Revenue (Low to High)</option>
+                        <option value="no_of_days">Stay Length</option>
+                        <option value="booked_date">Booking Date</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="min-revenue">Min Revenue</label>
+                    <input type="number" id="min-revenue" placeholder="$0" min="0">
+                </div>
+            </div>
+
+            <div class="view-toggles">
+                <button class="toggle-btn active" data-view="cards">📋 Card View</button>
+                <button class="toggle-btn" data-view="table">📊 Table View</button>
+                <button class="toggle-btn" data-view="grouped">🏠 Group by Property</button>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div class="cards-view active" id="cards-view">
+                <div class="reservations-grid" id="reservations-grid">
+                    <!-- Reservation cards will be populated here -->
+                </div>
+            </div>
+
+            <div class="table-view" id="table-view">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('listing_name')">Property</th>
+                            <th onclick="sortTable('reservation_id')">Reservation ID</th>
+                            <th onclick="sortTable('check_in')">Check-in</th>
+                            <th onclick="sortTable('check_out')">Check-out</th>
+                            <th onclick="sortTable('no_of_days')">Nights</th>
+                            <th onclick="sortTable('rental_revenue')">Revenue</th>
+                            <th onclick="sortTable('total_cost')">Total Cost</th>
+                            <th onclick="sortTable('booking_status')">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Table rows will be populated here -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="grouped-view" id="grouped-view" style="display: none;">
+                <!-- Grouped property view will be populated here -->
+            </div>
+
+            <div class="no-results" id="no-results" style="display: none;">
+                <h3>No reservations found</h3>
+                <p>Try adjusting your filters or search terms</p>
+            </div>
+        </div>
+
+        <div class="pagination">
+            <button id="prev-page" disabled>← Previous</button>
+            <span id="page-info">Page 1</span>
+            <button id="next-page">Next →</button>
+        </div>
+    </div>
+
+    <script>
+        // Embedded API response data
+        const apiResponse = {
+            "pms_name": "airbnb",
+            "next_page": true,
+            "data": [
+                {
+                    "listing_id": "634197676956646902",
+                    "listing_name": "PAG12161 · Mountaintop Estate: Pool-Hot Tub-Theatre-Tiki Bar",
+                    "reservation_id": "HM3MFTWPAE",
+                    "check_in": "2025-09-01",
+                    "check_out": "2025-09-04",
+                    "booking_status": "booked",
+                    "booked_date": "2025-07-23T17:12:52.000Z",
+                    "rental_revenue": "969.64",
+                    "total_cost": "1438.12",
+                    "no_of_days": 3,
+                    "currency": "USD",
+                    "cancelled_on": "2025-07-23T17:21:38.000Z",
+                    "channelConfirmationCode": null,
+                    "guestName": null,
+                    "cleaning_fees": 400
+                },
+                {
+                    "listing_id": "634197676956646902",
+                    "listing_name": "PAG12161 · Mountaintop Estate: Pool-Hot Tub-Theatre-Tiki Bar",
+                    "reservation_id": "HM25DKXXRT",
+                    "check_in": "2025-09-09",
+                    "check_out": "2025-09-11",
+                    "booking_status": "booked",
+                    "booked_date": "2025-09-02T05:13:48.000Z",
+                    "rental_revenue": "883.0",
+                    "total_cost": "1347.15",
+                    "no_of_days": 2,
+                    "currency": "USD",
+                    "cancelled_on": "2025-09-02T05:13:54.000Z",
+                    "channelConfirmationCode": null,
+                    "guestName": null,
+                    "cleaning_fees": 400
+                },
+                {
+                    "listing_id": "750684369623859183",
+                    "listing_name": "Felton 1b (#2) · Charming 1b/1b with Full Kitchen and outdoor Patio",
+                    "reservation_id": "HMCMTYDQXR",
+                    "check_in": "2025-08-17",
+                    "check_out": "2025-08-22",
+                    "booking_status": "booked",
+                    "booked_date": "2025-07-04T16:55:48.000Z",
+                    "rental_revenue": "434.39",
+                    "total_cost": "553.11",
+                    "no_of_days": 5,
+                    "currency": "USD",
+                    "cancelled_on": "2025-07-04T17:18:15.000Z",
+                    "channelConfirmationCode": null,
+                    "guestName": null,
+                    "cleaning_fees": 100
+                },
+                {
+                    "listing_id": "750684369623859183",
+                    "listing_name": "Felton 1b (#2) · Charming 1b/1b with Full Kitchen and outdoor Patio",
+                    "reservation_id": "HMPT5DC528",
+                    "check_in": "2025-08-22",
+                    "check_out": "2025-09-02",
+                    "booking_status": "booked",
+                    "booked_date": "2025-08-17T02:08:32.000Z",
+                    "rental_revenue": "0.0",
+                    "total_cost": "0.0",
+                    "no_of_days": 11,
+                    "currency": "USD",
+                    "cancelled_on": "2025-08-17T02:08:38.000Z",
+                    "channelConfirmationCode": null,
+                    "guestName": null,
+                    "cleaning_fees": 100
+                },
+                {
+                    "listing_id": "750684369623859183",
+                    "listing_name": "Felton 1b (#2) · Charming 1b/1b with Full Kitchen and outdoor Patio",
+                    "reservation_id": "HMM9ABCYTX",
+                    "check_in": "2025-09-14",
+                    "check_out": "2025-09-20",
+                    "booking_status": "booked",
+                    "booked_date": "2025-08-17T21:18:29.000Z",
+                    "rental_revenue": "0.0",
+                    "total_cost": "0.0",
+                    "no_of_days": 6,
+                    "currency": "USD",
+                    "cancelled_on": "2025-08-17T21:18:37.000Z",
+                    "channelConfirmationCode": null,
+                    "guestName": null,
+                    "cleaning_fees": 100
+                },
+                {
+                    "listing_id": "862371806629437889",
+                    "listing_name": "Santa Clara · Steps from beach, Newly Renovated!",
+                    "reservation_id": "HM5ZS24TZZ",
+                    "check_in": "2025-08-20",
+                    "check_out": "2025-08-24",
+                    "booking_status": "booked",
+                    "booked_date": "2025-05-29T22:29:49.000Z",
+                    "rental_revenue": "3838.07",
+                    "total_cost": "4062.43",
+                    "no_of_days": 4,
+                    "currency": "USD",
+                    "cancelled_on": "2025-05-29T22:29:57.000Z",
+                    "channelConfirmationCode": null,
+                    "guestName": null,
+                    "cleaning_fees": 350
+                },
+                {
+                    "listing_id": "862371806629437889",
+                    "listing_name": "Santa Clara · Steps from beach, Newly Renovated!",
+                    "reservation_id": "HMFXDHWKN4",
+                    "check_in": "2025-09-03",
+                    "check_out": "2025-09-07",
+                    "booking_status": "booked",
+                    "booked_date": "2025-08-26T08:14:12.000Z",
+                    "rental_revenue": "1911.89",
+                    "total_cost": "2194.03",
+                    "no_of_days": 4,
+                    "currency": "USD",
+                    "cancelled_on": "2025-09-06T02:17:09.000Z",
+                    "channelConfirmationCode": null,
+                    "guestName": null,
+                    "cleaning_fees": 350
+                },
+                {
+                    "listing_id": "862371806629437889",
+                    "listing_name": "Santa Clara · Steps from beach, Newly Renovated!",
+                    "reservation_id": "HMMDHSX2KX",
+                    "check_in": "2025-09-09",
+                    "check_out": "2025-09-14",
+                    "booking_status": "booked",
+                    "booked_date": "2025-09-09T07:05:13.000Z",
+                    "rental_revenue": "2459.0",
+                    "total_cost": "2724.73",
+                    "no_of_days": 5,
+                    "currency": "USD",
+                    "cancelled_on": "2025-09-13T03:47:55.000Z",
+                    "channelConfirmationCode": null,
+                    "guestName": null,
+                    "cleaning_fees": 350
+                },
+                {
+                    "listing_id": "980472101582945115",
+                    "listing_name": "MOU4840 · Mt Helix paradise",
+                    "reservation_id": "HM5ZH94QTC",
+                    "check_in": "2025-08-22",
+                    "check_out": "2025-08-24",
+                    "booking_status": "booked",
+                    "booked_date": "2025-03-21T14:44:53.000Z",
+                    "rental_revenue": "2500.0",
+                    "total_cost": "3061.5",
+                    "no_of_days": 2,
+                    "currency": "USD",
+                    "cancelled_on": "2025-03-21T14:45:03.000Z",
+                    "channelConfirmationCode": null,
+                    "guestName": null,
+                    "cleaning_fees": 450
+                },
+                {
+                    "listing_id": "980472101582945115",
+                    "listing_name": "MOU4840 · Mt Helix paradise",
+                    "reservation_id": "HMTQJ4298E",
+                    "check_in": "2025-08-31",
+                    "check_out": "2025-09-04",
+                    "booking_status": "booked",
+                    "booked_date": "2025-06-06T05:35:24.000Z",
+                    "rental_revenue": "2022.62",
+                    "total_cost": "2560.25",
+                    "no_of_days": 4,
+                    "currency": "USD",
+                    "cancelled_on": "2025-06-06T05:39:49.000Z",
+                    "channelConfirmationCode": null,
+                    "guestName": null,
+                    "cleaning_fees": 450
+                }
+            ]
+        };
+
+        // Application state
+        let filteredData = [...apiResponse.data];
+        let currentView = 'cards';
+        let currentSort = 'check_in';
+
+        // Utility functions
+        function formatCurrency(amount, currency = 'USD') {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: currency
+            }).format(parseFloat(amount));
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+        }
+
+        function formatDateRange(checkIn, checkOut) {
+            const startDate = new Date(checkIn);
+            const endDate = new Date(checkOut);
+            
+            if (startDate.getFullYear() === endDate.getFullYear() && 
+                startDate.getMonth() === endDate.getMonth()) {
+                return `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}-${endDate.getDate()}, ${endDate.getFullYear()}`;
+            }
+            return `${formatDate(checkIn)} - ${formatDate(checkOut)}`;
+        }
+
+        function getStatusFromData(reservation) {
+            return reservation.cancelled_on ? 'cancelled' : reservation.booking_status;
+        }
+
+        // Calculate metrics
+        function calculateMetrics(data) {
+            const totalRevenue = data.reduce((sum, r) => sum + parseFloat(r.rental_revenue), 0);
+            const totalDays = data.reduce((sum, r) => sum + r.no_of_days, 0);
+            const activeBookings = data.filter(r => !r.cancelled_on).length;
+            const cancelledBookings = data.filter(r => r.cancelled_on).length;
+            const cancellationRate = data.length > 0 ? (cancelledBookings / data.length * 100) : 0;
+            const avgDailyRate = totalDays > 0 ? totalRevenue / totalDays : 0;
+
+            return {
+                totalRevenue,
+                avgDailyRate,
+                activeBookings,
+                cancellationRate
+            };
+        }
+
+        // Update metrics display
+        function updateMetrics() {
+            const metrics = calculateMetrics(filteredData);
+            
+            document.getElementById('total-revenue').textContent = formatCurrency(metrics.totalRevenue);
+            document.getElementById('avg-daily-rate').textContent = formatCurrency(metrics.avgDailyRate);
+            document.getElementById('active-bookings').textContent = metrics.activeBookings;
+            document.getElementById('cancellation-rate').textContent = metrics.cancellationRate.toFixed(1) + '%';
+        }
+
+        // Update header metadata
+        function updateHeader() {
+            document.getElementById('pms-name').textContent = apiResponse.pms_name.charAt(0).toUpperCase() + apiResponse.pms_name.slice(1);
+            document.getElementById('total-count').textContent = filteredData.length;
+            document.getElementById('next-page').textContent = apiResponse.next_page ? 'Yes' : 'No';
+        }
+
+        // Create reservation card
+        function createReservationCard(reservation) {
+            const status = getStatusFromData(reservation);
+            const statusClass = status === 'cancelled' ? 'cancelled' : 'booked';
+            
+            return `
+                <div class="reservation-card ${statusClass}">
+                    <div class="card-header">
+                        <div class="listing-name">${reservation.listing_name}</div>
+                        <div class="status-badge ${status}">${status}</div>
+                    </div>
+                    
+                    <div class="reservation-id">ID: ${reservation.reservation_id}</div>
+                    
+                    <div class="dates-section">
+                        <div class="check-dates">
+                            📅 ${formatDateRange(reservation.check_in, reservation.check_out)}
+                            <span class="nights-badge">${reservation.no_of_days} night${reservation.no_of_days !== 1 ? 's' : ''}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="financial-info">
+                        <div class="financial-item">
+                            <div class="financial-value">${formatCurrency(reservation.rental_revenue, reservation.currency)}</div>
+                            <div class="financial-label">Revenue</div>
+                        </div>
+                        <div class="financial-item">
+                            <div class="financial-value">${formatCurrency(reservation.total_cost, reservation.currency)}</div>
+                            <div class="financial-label">Total Cost</div>
+                        </div>
+                    </div>
+                    
+                    <div class="cleaning-fee">
+                        🧹 Cleaning Fee: ${formatCurrency(reservation.cleaning_fees, reservation.currency)}
+                    </div>
+                    
+                    <div class="booking-details">
+                        <div>Booked: ${formatDate(reservation.booked_date)}</div>
+                        ${reservation.cancelled_on ? `<div>Cancelled: ${formatDate(reservation.cancelled_on)}</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Create table row
+        function createTableRow(reservation) {
+            const status = getStatusFromData(reservation);
+            return `
+                <tr>
+                    <td>${reservation.listing_name}</td>
+                    <td>${reservation.reservation_id}</td>
+                    <td>${formatDate(reservation.check_in)}</td>
+                    <td>${formatDate(reservation.check_out)}</td>
+                    <td>${reservation.no_of_days}</td>
+                    <td>${formatCurrency(reservation.rental_revenue, reservation.currency)}</td>
+                    <td>${formatCurrency(reservation.total_cost, reservation.currency)}</td>
+                    <td><span class="status-badge ${status}">${status}</span></td>
+                </tr>
+            `;
+        }
+
+        // Create grouped view
+        function createGroupedView(data) {
+            const grouped = data.reduce((acc, reservation) => {
+                const listingId = reservation.listing_id;
+                if (!acc[listingId]) {
+                    acc[listingId] = {
+                        name: reservation.listing_name,
+                        reservations: []
+                    };
+                }
+                acc[listingId].reservations.push(reservation);
+                return acc;
+            }, {});
+
+            let html = '';
+            Object.entries(grouped).forEach(([listingId, group]) => {
+                const totalRevenue = group.reservations.reduce((sum, r) => sum + parseFloat(r.rental_revenue), 0);
+                const totalReservations = group.reservations.length;
+                
+                html += `
+                    <div class="property-group">
+                        <div class="property-header">
+                            <span>${group.name}</span>
+                            <span class="property-stats">${totalReservations} reservations • ${formatCurrency(totalRevenue)} revenue</span>
+                        </div>
+                        <div class="property-reservations">
+                            <div class="reservations-grid">
+                                ${group.reservations.map(createReservationCard).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            return html;
+        }
+
+        // Render data based on current view
+        function renderData() {
+            const cardsView = document.getElementById('cards-view');
+            const tableView = document.getElementById('table-view');
+            const groupedView = document.getElementById('grouped-view');
+            const noResults = document.getElementById('no-results');
+
+            // Hide all views first
+            [cardsView, tableView, groupedView, noResults].forEach(view => {
+                view.style.display = 'none';
+                view.classList.remove('active');
+            });
+
+            if (filteredData.length === 0) {
+                noResults.style.display = 'block';
+                return;
+            }
+
+            switch (currentView) {
+                case 'cards':
+                    cardsView.style.display = 'block';
+                    cardsView.classList.add('active');
+                    document.getElementById('reservations-grid').innerHTML = 
+                        filteredData.map(createReservationCard).join('');
+                    break;
+                
+                case 'table':
+                    tableView.style.display = 'block';
+                    tableView.classList.add('active');
+                    document.getElementById('table-body').innerHTML = 
+                        filteredData.map(createTableRow).join('');
+                    break;
+                
+                case 'grouped':
+                    groupedView.style.display = 'block';
+                    groupedView.innerHTML = createGroupedView(filteredData);
+                    break;
+            }
+        }
+
+        // Sort data
+        function sortData(data, sortBy) {
+            return [...data].sort((a, b) => {
+                switch (sortBy) {
+                    case 'check_in':
+                        return new Date(a.check_in) - new Date(b.check_in);
+                    case 'rental_revenue':
+                        return parseFloat(b.rental_revenue) - parseFloat(a.rental_revenue);
+                    case 'rental_revenue_asc':
+                        return parseFloat(a.rental_revenue) - parseFloat(b.rental_revenue);
+                    case 'no_of_days':
+                        return b.no_of_days - a.no_of_days;
+                    case 'booked_date':
+                        return new Date(b.booked_date) - new Date(a.booked_date);
+                    default:
+                        return 0;
+                }
+            });
+        }
+
+        // Filter data
+        function filterData() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase();
+            const statusFilter = document.getElementById('status-filter').value;
+            const propertyFilter = document.getElementById('property-filter').value;
+            const minRevenue = parseFloat(document.getElementById('min-revenue').value) || 0;
+
+            filteredData = apiResponse.data.filter(reservation => {
+                // Search filter
+                const searchMatch = !searchTerm || 
+                    reservation.listing_name.toLowerCase().includes(searchTerm) ||
+                    reservation.reservation_id.toLowerCase().includes(searchTerm) ||
+                    reservation.listing_id.includes(searchTerm);
+
+                // Status filter
+                const actualStatus = getStatusFromData(reservation);
+                const statusMatch = !statusFilter || actualStatus === statusFilter;
+
+                // Property filter
+                const propertyMatch = !propertyFilter || reservation.listing_id === propertyFilter;
+
+                // Revenue filter
+                const revenueMatch = parseFloat(reservation.rental_revenue) >= minRevenue;
+
+                return searchMatch && statusMatch && propertyMatch && revenueMatch;
+            });
+
+            // Apply sorting
+            filteredData = sortData(filteredData, currentSort);
+
+            // Update display
+            renderData();
+            updateMetrics();
+            updateHeader();
+        }
+
+        // Initialize property filter options
+        function initializePropertyFilter() {
+            const properties = [...new Set(apiResponse.data.map(r => r.listing_id))];
+            const propertyFilter = document.getElementById('property-filter');
+            
+            properties.forEach(listingId => {
+                const listing = apiResponse.data.find(r => r.listing_id === listingId);
+                const option = document.createElement('option');
+                option.value = listingId;
+                option.textContent = listing.listing_name;
+                propertyFilter.appendChild(option);
+            });
+        }
+
+        // Event listeners
+        function initializeEventListeners() {
+            // Search input
+            document.getElementById('search-input').addEventListener('input', filterData);
+
+            // Filter controls
+            document.getElementById('status-filter').addEventListener('change', filterData);
+            document.getElementById('property-filter').addEventListener('change', filterData);
+            document.getElementById('min-revenue').addEventListener('input', filterData);
+            document.getElementById('sort-by').addEventListener('change', (e) => {
+                currentSort = e.target.value;
+                filterData();
+            });
+
+            // View toggles
+            document.querySelectorAll('.toggle-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    // Remove active class from all buttons
+                    document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+                    
+                    // Add active class to clicked button
+                    e.target.classList.add('active');
+                    
+                    // Update current view
+                    currentView = e.target.dataset.view;
+                    renderData();
+                });
+            });
+
+            // Pagination (simulated)
+            document.getElementById('next-page').addEventListener('click', () => {
+                if (apiResponse.next_page) {
+                    alert('This is a demo. In a real implementation, this would load the next page of data.');
+                }
+            });
+        }
+
+        // Table sorting
+        function sortTable(column) {
+            currentSort = column === 'rental_revenue' ? 'rental_revenue' : column;
+            document.getElementById('sort-by').value = currentSort;
+            filterData();
+        }
+
+        // Initialize the application
+        function init() {
+            initializePropertyFilter();
+            initializeEventListeners();
+            filterData(); // Initial render
+        }
+
+        // Start the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

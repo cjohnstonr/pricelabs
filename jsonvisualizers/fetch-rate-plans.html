@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Rate Plans API Response Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: #f9fafb;
+            line-height: 1.6;
+            color: #1f2937;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2563eb, #3b82f6);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .controls {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+        }
+
+        .controls h3 {
+            margin-bottom: 1rem;
+            color: #374151;
+            font-size: 1.1rem;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: #1d4ed8;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: #6b7280;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background-color: #4b5563;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background-color: #059669;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #047857;
+            transform: translateY(-1px);
+        }
+
+        .property-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e7eb;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .property-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #2563eb, #3b82f6);
+        }
+
+        .property-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .property-info {
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .property-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
+        }
+
+        .property-id {
+            font-size: 0.875rem;
+            color: #6b7280;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            margin-bottom: 1rem;
+        }
+
+        .pms-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, #ff5a5f, #ff385c);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(255, 90, 95, 0.3);
+        }
+
+        .rate-plans-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e5e7eb;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.375rem;
+            font-weight: 600;
+            color: #1f2937;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1.5rem;
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .empty-state h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state p {
+            font-size: 1rem;
+            margin-bottom: 2rem;
+            max-width: 400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .json-viewer {
+            background: #1f2937;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+        }
+
+        .json-viewer pre {
+            color: #e5e7eb;
+            margin: 0;
+        }
+
+        .json-key {
+            color: #60a5fa;
+        }
+
+        .json-string {
+            color: #34d399;
+        }
+
+        .json-number {
+            color: #fbbf24;
+        }
+
+        .json-boolean {
+            color: #f472b6;
+        }
+
+        .json-null {
+            color: #9ca3af;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2563eb;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .toggle {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background-color: #d1d5db;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .toggle.active {
+            background-color: #2563eb;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background-color: white;
+            border-radius: 50%;
+            transition: transform 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .toggle.active .toggle-slider {
+            transform: translateX(26px);
+        }
+
+        .timestamp {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            text-align: center;
+            margin-top: 2rem;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .property-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .property-name {
+                font-size: 1.25rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                justify-content: center;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #2563eb;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            background: #10b981;
+            color: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Fetch Rate Plans API Response Visualizer</h1>
+            <p>Interactive visualization of property rate plans data from the PriceLabs API</p>
+        </div>
+
+        <div class="controls">
+            <h3>Controls</h3>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="refreshData()">
+                    <span id="refresh-icon">🔄</span>
+                    Refresh Data
+                </button>
+                <button class="btn btn-secondary" onclick="toggleJsonView()">
+                    <span>📊</span>
+                    Toggle JSON View
+                </button>
+                <button class="btn btn-success" onclick="exportData()">
+                    <span>📁</span>
+                    Export Data
+                </button>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="property-count">1</div>
+                <div class="stat-label">Properties</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="rateplans-count">0</div>
+                <div class="stat-label">Rate Plans</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="pms-type">Airbnb</div>
+                <div class="stat-label">PMS Platform</div>
+            </div>
+        </div>
+
+        <div id="property-container"></div>
+
+        <div id="json-container" class="json-viewer" style="display: none;">
+            <div class="section-header">
+                <h3 style="color: #e5e7eb; margin: 0;">Raw JSON Response</h3>
+                <div class="toggle-container">
+                    <span style="color: #9ca3af; font-size: 0.875rem;">Pretty Print</span>
+                    <div class="toggle active" onclick="togglePrettyPrint()">
+                        <div class="toggle-slider"></div>
+                    </div>
+                </div>
+            </div>
+            <pre id="json-content"></pre>
+        </div>
+
+        <div class="timestamp">
+            Generated: <span id="generation-time">2025-09-16T15:32:39.753414</span> | 
+            Last Updated: <span id="last-updated"></span>
+        </div>
+    </div>
+
+    <div id="notification" class="notification">
+        <span id="notification-text">Data refreshed successfully!</span>
+    </div>
+
+    <script>
+        // Sample data embedded from API response
+        const sampleData = {
+            "rate_plans": {
+                "id": "634197676956646902",
+                "pms": "airbnb",
+                "name": "PAG12161 · Mountaintop Estate: Pool-Hot Tub-Theatre-Tiki Bar",
+                "rateplans": {}
+            }
+        };
+
+        let currentData = sampleData;
+        let jsonViewVisible = false;
+        let prettyPrintEnabled = true;
+
+        // Initialize the visualization
+        function initializeVisualization() {
+            renderPropertyCard();
+            updateStats();
+            updateTimestamp();
+            highlightJsonSyntax();
+        }
+
+        // Render the main property card
+        function renderPropertyCard() {
+            const container = document.getElementById('property-container');
+            const ratePlans = currentData.rate_plans;
+            
+            const propertyCard = `
+                <div class="property-card fade-in">
+                    <div class="property-header">
+                        <div class="property-info">
+                            <h2 class="property-name">${ratePlans.name}</h2>
+                            <div class="property-id">ID: ${ratePlans.id}</div>
+                            <div class="pms-badge">
+                                <span>🏠</span>
+                                ${ratePlans.pms.charAt(0).toUpperCase() + ratePlans.pms.slice(1)}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="rate-plans-section fade-in">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <span>📋</span>
+                            Rate Plans
+                        </h3>
+                    </div>
+                    ${renderRatePlansContent()}
+                </div>
+            `;
+            
+            container.innerHTML = propertyCard;
+        }
+
+        // Render rate plans content (empty state for current data)
+        function renderRatePlansContent() {
+            const ratePlans = currentData.rate_plans.rateplans;
+            const planCount = Object.keys(ratePlans).length;
+
+            if (planCount === 0) {
+                return `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📅</div>
+                        <h3>No Rate Plans Configured</h3>
+                        <p>This property doesn't have any rate plans set up yet. Rate plans define pricing strategies and availability rules for different periods.</p>
+                        <button class="btn btn-primary" onclick="simulateAddRatePlan()">
+                            <span>➕</span>
+                            Add Rate Plan
+                        </button>
+                    </div>
+                `;
+            }
+
+            // Future: When rate plans are available, render them as cards
+            return Object.entries(ratePlans).map(([key, plan]) => `
+                <div class="rate-plan-card">
+                    <h4>${plan.name || 'Unnamed Rate Plan'}</h4>
+                    <!-- Rate plan details would go here -->
+                </div>
+            `).join('');
+        }
+
+        // Update statistics
+        function updateStats() {
+            const ratePlans = currentData.rate_plans.rateplans;
+            const planCount = Object.keys(ratePlans).length;
+            
+            document.getElementById('rateplans-count').textContent = planCount;
+            document.getElementById('pms-type').textContent = 
+                currentData.rate_plans.pms.charAt(0).toUpperCase() + 
+                currentData.rate_plans.pms.slice(1);
+        }
+
+        // Refresh data simulation
+        function refreshData() {
+            const refreshIcon = document.getElementById('refresh-icon');
+            refreshIcon.innerHTML = '<div class="loading"></div>';
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                refreshIcon.innerHTML = '🔄';
+                showNotification('Data refreshed successfully!');
+                updateTimestamp();
+                
+                // In a real application, you would fetch new data here
+                // currentData = await fetchRatePlansData();
+                // renderPropertyCard();
+                // updateStats();
+            }, 1500);
+        }
+
+        // Toggle JSON view
+        function toggleJsonView() {
+            const jsonContainer = document.getElementById('json-container');
+            jsonViewVisible = !jsonViewVisible;
+            
+            if (jsonViewVisible) {
+                jsonContainer.style.display = 'block';
+                highlightJsonSyntax();
+            } else {
+                jsonContainer.style.display = 'none';
+            }
+        }
+
+        // Toggle pretty print
+        function togglePrettyPrint() {
+            const toggle = document.querySelector('.toggle');
+            prettyPrintEnabled = !prettyPrintEnabled;
+            toggle.classList.toggle('active');
+            highlightJsonSyntax();
+        }
+
+        // Highlight JSON syntax
+        function highlightJsonSyntax() {
+            const jsonContent = document.getElementById('json-content');
+            const jsonString = prettyPrintEnabled 
+                ? JSON.stringify(currentData, null, 2) 
+                : JSON.stringify(currentData);
+            
+            // Simple syntax highlighting
+            const highlighted = jsonString
+                .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
+                .replace(/: "([^"]+)"/g, ': <span class="json-string">"$1"</span>')
+                .replace(/: (\d+)/g, ': <span class="json-number">$1</span>')
+                .replace(/: (true|false)/g, ': <span class="json-boolean">$1</span>')
+                .replace(/: null/g, ': <span class="json-null">null</span>');
+            
+            jsonContent.innerHTML = highlighted;
+        }
+
+        // Export data functionality
+        function exportData() {
+            const dataStr = JSON.stringify(currentData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `rate-plans-${Date.now()}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            showNotification('Data exported successfully!');
+        }
+
+        // Simulate adding a rate plan
+        function simulateAddRatePlan() {
+            showNotification('Add Rate Plan functionality would be implemented here!');
+        }
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notification-text');
+            
+            notificationText.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        // Update timestamp
+        function updateTimestamp() {
+            document.getElementById('last-updated').textContent = new Date().toLocaleString();
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        refreshData();
+                        break;
+                    case 'j':
+                        e.preventDefault();
+                        toggleJsonView();
+                        break;
+                    case 's':
+                        e.preventDefault();
+                        exportData();
+                        break;
+                }
+            }
+        });
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', initializeVisualization);
+
+        // Auto-refresh every 5 minutes
+        setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                refreshData();
+            }
+        }, 300000);
+    </script>
+</body>
+</html>
