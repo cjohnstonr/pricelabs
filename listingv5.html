@@ -1045,9 +1045,14 @@
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const listingId = urlParams.get('listing_id');
-            
+            const portfolioKey = urlParams.get('portfolio_key');
+
             if (listingId) {
                 document.getElementById('listing-id-input').value = listingId;
+                // Store portfolio_key for reference (backend auto-detects, but good for UX)
+                if (portfolioKey) {
+                    console.log(`Loading listing ${listingId} from portfolio: ${portfolioKey}`);
+                }
                 loadDashboard();
             }
         });
@@ -1060,9 +1065,13 @@
                 return;
             }
 
-            // Update URL
+            // Update URL (keep portfolio_key if it exists)
             const url = new URL(window.location);
             url.searchParams.set('listing_id', listingId);
+            const portfolioKey = url.searchParams.get('portfolio_key');
+            if (portfolioKey) {
+                url.searchParams.set('portfolio_key', portfolioKey);
+            }
             window.history.pushState({}, '', url);
 
             // Show loading

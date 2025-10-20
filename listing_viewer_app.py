@@ -3,7 +3,7 @@ Flask web application for viewing PriceLabs listing information
 Automatically detects the correct API key using portfolio mapping
 """
 
-from flask import Flask, render_template_string, request, jsonify
+from flask import Flask, render_template_string, request, jsonify, send_from_directory
 from flask_cors import CORS
 from portfolio_manager import PortfolioManager
 from pricelabs_api import PriceLabsAPI
@@ -592,6 +592,11 @@ def index():
     """Main page with optional listing_id parameter"""
     listing_id = request.args.get('listing_id', '')
     return render_template_string(HTML_TEMPLATE, listing_id=listing_id)
+
+@app.route('/listingv5.html')
+def listingv5():
+    """Serve the v5 listing viewer HTML file"""
+    return send_from_directory('.', 'listingv5.html')
 
 @app.route('/api/listing/<listing_id>')
 def get_listing_data(listing_id):

@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PriceLabs Listing Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            color: #333;
+            padding: 20px;
+        }
+
+        .header {
+            background: white;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 15px;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+        }
+
+        select, input[type="search"] {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            cursor: pointer;
+        }
+
+        input[type="search"] {
+            min-width: 250px;
+        }
+
+        select:hover, input[type="search"]:focus {
+            border-color: #4CAF50;
+            outline: none;
+        }
+
+        .stats {
+            font-size: 14px;
+            color: #666;
+            margin-left: auto;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: #f8f9fa;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #e0e0e0;
+            white-space: nowrap;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        th:hover {
+            background: #e9ecef;
+        }
+
+        th.sortable::after {
+            content: ' ⇅';
+            opacity: 0.3;
+            font-size: 11px;
+        }
+
+        th.sort-asc::after {
+            content: ' ▲';
+            opacity: 1;
+        }
+
+        th.sort-desc::after {
+            content: ' ▼';
+            opacity: 1;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tbody tr {
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        tbody tr:hover {
+            background: #e3f2fd;
+        }
+
+        tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        tbody tr:nth-child(even):hover {
+            background: #e3f2fd;
+        }
+
+        .mpi-value {
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-block;
+            min-width: 45px;
+            text-align: center;
+        }
+
+        .mpi-low {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .mpi-medium {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .mpi-high {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-inactive {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .api-key {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .refresh-btn {
+            padding: 8px 16px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .refresh-btn:hover {
+            background: #45a049;
+        }
+
+        .refresh-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .stats {
+                margin-left: 0;
+                margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>PriceLabs Listing Dashboard</h1>
+        <div class="controls">
+            <div class="filter-group">
+                <label for="portfolioFilter">Portfolio:</label>
+                <select id="portfolioFilter">
+                    <option value="all">All Portfolios</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="syncFilter">Sync Status:</label>
+                <select id="syncFilter">
+                    <option value="all">All</option>
+                    <option value="Syncing">Syncing</option>
+                    <option value="Not Syncing">Not Syncing</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="searchInput">Search:</label>
+                <input type="search" id="searchInput" placeholder="Search by listing name...">
+            </div>
+
+            <button class="refresh-btn" id="refreshBtn">↻ Refresh Data</button>
+
+            <div class="filter-group">
+                <label>
+                    <input type="checkbox" id="showLocationToggle"> Show Lat/Long
+                </label>
+            </div>
+
+            <div class="stats" id="statsDisplay">
+                Loading...
+            </div>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <div id="loadingMessage" class="loading">
+            Loading listings from all portfolios...
+        </div>
+        <div id="errorMessage" class="error" style="display: none;"></div>
+        <div class="table-wrapper" id="tableWrapper" style="display: none;">
+            <table id="listingsTable">
+                <thead>
+                    <tr>
+                        <th class="sortable" data-column="name">Listing Name</th>
+                        <th class="sortable" data-column="portfolio">Portfolio</th>
+                        <th class="sortable" data-column="api_key">API Key</th>
+                        <th class="sortable" data-column="city">City</th>
+                        <th class="sortable" data-column="state">State</th>
+                        <th class="sortable location-column" data-column="latitude" style="display: none;">Latitude</th>
+                        <th class="sortable location-column" data-column="longitude" style="display: none;">Longitude</th>
+                        <th class="sortable" data-column="bedrooms">Beds</th>
+                        <th class="sortable" data-column="mpi_30">MPI 30d</th>
+                        <th class="sortable" data-column="mpi_60">MPI 60d</th>
+                        <th class="sortable" data-column="mpi_90">MPI 90d</th>
+                        <th class="sortable" data-column="mpi_180">MPI 180d</th>
+                        <th class="sortable" data-column="occ_7">Occ 7d</th>
+                        <th class="sortable" data-column="occ_30">Occ 30d</th>
+                        <th class="sortable" data-column="occ_60">Occ 60d</th>
+                        <th class="sortable" data-column="market_occ_30">Mkt Occ 30d</th>
+                        <th class="sortable" data-column="sync_status">Sync Status</th>
+                        <th class="sortable" data-column="push_enabled">Push Enabled</th>
+                        <th class="sortable" data-column="last_pushed">Last Pushed</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let allListings = [];
+        let filteredListings = [];
+        let sortColumn = null;
+        let sortDirection = 'asc';
+
+        // Load data from API
+        async function loadData() {
+            try {
+                const response = await fetch('/api/listings/dashboard');
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.error || 'Failed to load data');
+                }
+
+                allListings = data.listings;
+                filteredListings = [...allListings];
+
+                // Populate portfolio filter
+                const portfolioFilter = document.getElementById('portfolioFilter');
+                portfolioFilter.innerHTML = '<option value="all">All Portfolios</option>';
+                data.portfolios.forEach(p => {
+                    const option = document.createElement('option');
+                    option.value = p.key;
+                    option.textContent = p.name;
+                    portfolioFilter.appendChild(option);
+                });
+
+                renderTable();
+                updateStats();
+
+                document.getElementById('loadingMessage').style.display = 'none';
+                document.getElementById('tableWrapper').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('loadingMessage').style.display = 'none';
+                const errorDiv = document.getElementById('errorMessage');
+                errorDiv.textContent = 'Error loading data: ' + error.message;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        // Format MPI value with color coding
+        function formatMPI(value) {
+            if (value === null || value === undefined || value === 0) {
+                return '<span class="mpi-value">-</span>';
+            }
+
+            const mpi = parseFloat(value);
+            let cssClass = 'mpi-medium';
+            if (mpi < 1.0) cssClass = 'mpi-low';
+            else if (mpi >= 2.0) cssClass = 'mpi-high';
+
+            return `<span class="mpi-value ${cssClass}">${mpi.toFixed(1)}</span>`;
+        }
+
+        // Format date
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr === 'Never' || dateStr === 'N/A') return dateStr;
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            } catch {
+                return dateStr;
+            }
+        }
+
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (filteredListings.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="19" style="text-align: center; padding: 40px; color: #999;">No listings match your filters</td></tr>';
+                return;
+            }
+
+            filteredListings.forEach(listing => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${listing.name || 'Unnamed'}</strong></td>
+                    <td>${listing.portfolio}</td>
+                    <td class="api-key">${listing.api_key}</td>
+                    <td>${listing.city}</td>
+                    <td>${listing.state}</td>
+                    <td class="location-column" style="display: none;">${listing.latitude || 'N/A'}</td>
+                    <td class="location-column" style="display: none;">${listing.longitude || 'N/A'}</td>
+                    <td>${listing.bedrooms || 0}</td>
+                    <td>${formatMPI(listing.mpi_30)}</td>
+                    <td>${formatMPI(listing.mpi_60)}</td>
+                    <td>${formatMPI(listing.mpi_90)}</td>
+                    <td>${formatMPI(listing.mpi_180)}</td>
+                    <td>${listing.occ_7}</td>
+                    <td>${listing.occ_30}</td>
+                    <td>${listing.occ_60}</td>
+                    <td>${listing.market_occ_30}</td>
+                    <td><span class="status-badge ${listing.sync_status === 'Syncing' ? 'status-active' : 'status-inactive'}">${listing.sync_status}</span></td>
+                    <td><span class="status-badge ${listing.push_enabled ? 'status-active' : 'status-inactive'}">${listing.push_enabled ? 'Yes' : 'No'}</span></td>
+                    <td>${formatDate(listing.last_pushed)}</td>
+                `;
+
+                // Add click handler to open listing viewer
+                row.addEventListener('click', () => {
+                    const url = `http://localhost:5050/listingv5.html?listing_id=${listing.id}&portfolio_key=${listing.portfolio_key}`;
+                    window.open(url, '_blank');
+                });
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update stats display
+        function updateStats() {
+            const total = allListings.length;
+            const filtered = filteredListings.length;
+            const active = filteredListings.filter(l => l.push_enabled).length;
+
+            document.getElementById('statsDisplay').textContent =
+                `Showing ${filtered} of ${total} listings (${active} active)`;
+        }
+
+        // Filter listings
+        function filterListings() {
+            const portfolio = document.getElementById('portfolioFilter').value;
+            const syncStatus = document.getElementById('syncFilter').value;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredListings = allListings.filter(listing => {
+                const matchesPortfolio = portfolio === 'all' || listing.portfolio_key === portfolio;
+                const matchesSyncStatus = syncStatus === 'all' || listing.sync_status === syncStatus;
+                const matchesSearch = !searchTerm || listing.name.toLowerCase().includes(searchTerm);
+                return matchesPortfolio && matchesSyncStatus && matchesSearch;
+            });
+
+            if (sortColumn) {
+                sortListings(sortColumn, sortDirection);
+            } else {
+                renderTable();
+                updateStats();
+            }
+        }
+
+        // Sort listings
+        function sortListings(column, direction) {
+            filteredListings.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+
+                // Handle null/undefined
+                if (aVal === null || aVal === undefined) aVal = '';
+                if (bVal === null || bVal === undefined) bVal = '';
+
+                // Handle numbers
+                if (typeof aVal === 'number' && typeof bVal === 'number') {
+                    return direction === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+
+                // Handle strings
+                aVal = String(aVal).toLowerCase();
+                bVal = String(bVal).toLowerCase();
+
+                if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+                if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+
+            renderTable();
+            updateStats();
+        }
+
+        // Handle column header clicks
+        document.querySelectorAll('th.sortable').forEach(th => {
+            th.addEventListener('click', () => {
+                const column = th.dataset.column;
+
+                if (sortColumn === column) {
+                    sortDirection = sortDirection === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortColumn = column;
+                    sortDirection = 'asc';
+                }
+
+                // Update UI
+                document.querySelectorAll('th.sortable').forEach(h => {
+                    h.classList.remove('sort-asc', 'sort-desc');
+                });
+                th.classList.add(`sort-${sortDirection}`);
+
+                sortListings(sortColumn, sortDirection);
+            });
+        });
+
+        // Event listeners
+        document.getElementById('portfolioFilter').addEventListener('change', filterListings);
+        document.getElementById('syncFilter').addEventListener('change', filterListings);
+        document.getElementById('searchInput').addEventListener('input', filterListings);
+
+        // Toggle location columns visibility
+        document.getElementById('showLocationToggle').addEventListener('change', (e) => {
+            const display = e.target.checked ? 'table-cell' : 'none';
+            document.querySelectorAll('.location-column').forEach(col => {
+                col.style.display = display;
+            });
+        });
+
+        document.getElementById('refreshBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('refreshBtn');
+            btn.disabled = true;
+            btn.textContent = '↻ Refreshing...';
+
+            try {
+                await fetch('/api/refresh');
+                await loadData();
+            } catch (error) {
+                console.error('Refresh error:', error);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '↻ Refresh Data';
+            }
+        });
+
+        // Load data on page load
+        loadData();
+    </script>
+</body>
+</html>
