@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Booking Window Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            color: #1a202c;
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header .subtitle {
+            color: #64748b;
+            font-size: 16px;
+        }
+
+        .loading {
+            background: white;
+            border-radius: 16px;
+            padding: 60px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a202c;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            opacity: 0.9;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+        }
+
+        .stat-unit {
+            font-size: 16px;
+            opacity: 0.8;
+            margin-left: 5px;
+        }
+
+        .error {
+            background: #fee;
+            color: #c00;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .insight-box {
+            background: #f8fafc;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .insight-box h3 {
+            color: #1a202c;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .insight-box p {
+            color: #64748b;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Market Booking Window Analysis</h1>
+            <p class="subtitle" id="property-name">Loading property data...</p>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Fetching booking window data from PriceLabs API...</p>
+        </div>
+
+        <div id="content" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Current Period</div>
+                    <div class="stat-value">
+                        <span id="current-window">--</span>
+                        <span class="stat-unit">days</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">12-Month Average</div>
+                    <div class="stat-value">
+                        <span id="avg-window">--</span>
+                        <span class="stat-unit">days</span>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Trend</div>
+                    <div class="stat-value">
+                        <span id="trend">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Market Booking Window Over Time</div>
+                <canvas id="bookingWindowChart"></canvas>
+            </div>
+
+            <div class="chart-container">
+                <div class="chart-title">Seasonal Patterns</div>
+                <canvas id="seasonalChart"></canvas>
+            </div>
+
+            <div class="insight-box">
+                <h3>💡 Key Insights</h3>
+                <p id="insights">Analyzing booking window patterns...</p>
+            </div>
+        </div>
+
+        <div id="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        // Configuration
+        const LISTING_ID = '676dc2687292010012976878'; // Aerie property
+        const API_BASE = 'http://localhost:5050';
+
+        let bookingWindowChart = null;
+        let seasonalChart = null;
+
+        // Fetch data and initialize
+        async function init() {
+            try {
+                // Fetch listing info
+                const listingResponse = await fetch(`${API_BASE}/api/listing/${LISTING_ID}`);
+                const listingData = await listingResponse.json();
+
+                // Update property name
+                document.getElementById('property-name').textContent =
+                    listingData.listing_name || 'Property';
+
+                // Fetch neighborhood data with booking window
+                const neighborhoodResponse = await fetch(`${API_BASE}/api/neighborhood/${LISTING_ID}`);
+                const neighborhoodData = await neighborhoodResponse.json();
+
+                // Extract Market KPI data
+                const marketKPI = neighborhoodData.data['Market KPI'];
+
+                // Find the bedroom category for this listing
+                const bedrooms = listingData.listing_data.no_of_bedrooms.toString();
+                const categoryData = marketKPI.Category[bedrooms] || marketKPI.Category['-1'];
+
+                // Extract booking window data (Y_values[1])
+                const timePeriods = categoryData.X_values;
+                const bookingWindows = categoryData.Y_values[1];
+
+                // Process and visualize
+                processData(timePeriods, bookingWindows);
+
+                // Hide loading, show content
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('content').style.display = 'block';
+
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                document.getElementById('loading').style.display = 'none';
+                const errorDiv = document.getElementById('error');
+                errorDiv.innerHTML = `
+                    <h3>Error Loading Data</h3>
+                    <p>${error.message}</p>
+                    <p>Make sure the Flask server is running on port 5050.</p>
+                `;
+                errorDiv.style.display = 'block';
+            }
+        }
+
+        function processData(timePeriods, bookingWindows) {
+            // Filter out aggregate periods (Last 365 Days, etc.)
+            const monthlyData = [];
+            for (let i = 0; i < timePeriods.length; i++) {
+                if (!timePeriods[i].includes('Last')) {
+                    monthlyData.push({
+                        period: timePeriods[i],
+                        window: bookingWindows[i]
+                    });
+                }
+            }
+
+            // Calculate statistics
+            const validWindows = monthlyData.map(d => d.window).filter(w => w > 0);
+            const currentWindow = validWindows[validWindows.length - 1] || 0;
+            const avgWindow = validWindows.reduce((a, b) => a + b, 0) / validWindows.length;
+            const recentAvg = validWindows.slice(-3).reduce((a, b) => a + b, 0) / 3;
+            const trend = recentAvg > avgWindow ? '📈 Increasing' : '📉 Decreasing';
+
+            // Update stats
+            document.getElementById('current-window').textContent = Math.round(currentWindow);
+            document.getElementById('avg-window').textContent = Math.round(avgWindow);
+            document.getElementById('trend').textContent = trend;
+
+            // Generate insights
+            generateInsights(currentWindow, avgWindow, monthlyData);
+
+            // Create charts
+            createTimelineChart(monthlyData);
+            createSeasonalChart(monthlyData);
+        }
+
+        function createTimelineChart(data) {
+            const ctx = document.getElementById('bookingWindowChart').getContext('2d');
+
+            // Destroy existing chart if it exists
+            if (bookingWindowChart) {
+                bookingWindowChart.destroy();
+            }
+
+            bookingWindowChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.map(d => d.period),
+                    datasets: [{
+                        label: 'Booking Window (Days in Advance)',
+                        data: data.map(d => d.window),
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        pointBackgroundColor: '#667eea',
+                        pointBorderColor: '#fff',
+                        pointBorderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2.5,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: { size: 14, weight: '600' },
+                                color: '#1a202c'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14, weight: '600' },
+                            bodyFont: { size: 13 },
+                            callbacks: {
+                                label: function(context) {
+                                    return `Booking Window: ${Math.round(context.parsed.y)} days`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Days in Advance',
+                                font: { size: 14, weight: '600' },
+                                color: '#64748b'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: { size: 12 },
+                                color: '#64748b'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: { size: 11 },
+                                color: '#64748b',
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createSeasonalChart(data) {
+            // Group by month name (extract month from "Oct 2023" format)
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                               'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            const seasonalData = {};
+            monthNames.forEach(month => {
+                seasonalData[month] = [];
+            });
+
+            data.forEach(d => {
+                const month = d.period.split(' ')[0];
+                if (seasonalData[month]) {
+                    seasonalData[month].push(d.window);
+                }
+            });
+
+            // Calculate averages
+            const averages = monthNames.map(month => {
+                const values = seasonalData[month].filter(v => v > 0);
+                return values.length > 0
+                    ? values.reduce((a, b) => a + b, 0) / values.length
+                    : null;
+            });
+
+            const ctx = document.getElementById('seasonalChart').getContext('2d');
+
+            // Destroy existing chart if it exists
+            if (seasonalChart) {
+                seasonalChart.destroy();
+            }
+
+            seasonalChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: monthNames,
+                    datasets: [{
+                        label: 'Average Booking Window by Month',
+                        data: averages,
+                        backgroundColor: monthNames.map((_, i) => {
+                            const hue = (i / 12) * 360;
+                            return `hsla(${hue}, 70%, 60%, 0.8)`;
+                        }),
+                        borderColor: monthNames.map((_, i) => {
+                            const hue = (i / 12) * 360;
+                            return `hsla(${hue}, 70%, 50%, 1)`;
+                        }),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    aspectRatio: 2.5,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                            labels: {
+                                font: { size: 14, weight: '600' },
+                                color: '#1a202c'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                            padding: 12,
+                            titleFont: { size: 14, weight: '600' },
+                            bodyFont: { size: 13 },
+                            callbacks: {
+                                label: function(context) {
+                                    return context.parsed.y !== null
+                                        ? `Avg Window: ${Math.round(context.parsed.y)} days`
+                                        : 'No data';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Days in Advance',
+                                font: { size: 14, weight: '600' },
+                                color: '#64748b'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            },
+                            ticks: {
+                                font: { size: 12 },
+                                color: '#64748b'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                font: { size: 12 },
+                                color: '#64748b'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function generateInsights(current, average, data) {
+            const insights = [];
+
+            // Trend analysis
+            const recentData = data.slice(-6).map(d => d.window);
+            const olderData = data.slice(-12, -6).map(d => d.window);
+            const recentAvg = recentData.reduce((a, b) => a + b, 0) / recentData.length;
+            const olderAvg = olderData.reduce((a, b) => a + b, 0) / olderData.length;
+
+            if (recentAvg > olderAvg * 1.1) {
+                insights.push('📈 Booking windows are increasing - guests are planning further ahead.');
+            } else if (recentAvg < olderAvg * 0.9) {
+                insights.push('📉 Booking windows are decreasing - more last-minute bookings.');
+            }
+
+            // Current vs average
+            if (current > average * 1.2) {
+                insights.push(`⚡ Current booking window (${Math.round(current)} days) is significantly higher than average (${Math.round(average)} days).`);
+            } else if (current < average * 0.8) {
+                insights.push(`⏰ Current booking window (${Math.round(current)} days) is shorter than average (${Math.round(average)} days).`);
+            }
+
+            // Find peak month
+            const validData = data.filter(d => d.window > 0);
+            const maxWindow = Math.max(...validData.map(d => d.window));
+            const peakMonth = validData.find(d => d.window === maxWindow);
+            if (peakMonth) {
+                insights.push(`🏆 Peak booking window: ${Math.round(maxWindow)} days (${peakMonth.period})`);
+            }
+
+            document.getElementById('insights').innerHTML =
+                insights.length > 0
+                    ? insights.join('<br><br>')
+                    : 'Not enough data to generate insights.';
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>

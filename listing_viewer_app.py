@@ -598,6 +598,11 @@ def listingv5():
     """Serve the v5 listing viewer HTML file"""
     return send_from_directory('.', 'listingv5.html')
 
+@app.route('/booking_window_viewer.html')
+def booking_window_viewer():
+    """Serve the booking window visualization HTML file"""
+    return send_from_directory('.', 'booking_window_viewer.html')
+
 @app.route('/api/listing/<listing_id>')
 def get_listing_data(listing_id):
     """API endpoint to fetch listing data using portfolio mapping"""
@@ -723,6 +728,107 @@ def get_neighborhood_data(listing_id):
         
         return jsonify(neighborhood_data)
         
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/reservation_data/<listing_id>')
+def get_reservation_data(listing_id):
+    """
+    API endpoint to fetch reservation/booking data for a listing
+
+    Note: The reservation_data endpoint is not available for all API keys,
+    so we use a workaround by extracting booking data from the listing itself,
+    similar to what appscript.js does.
+
+    Query Parameters:
+        start_date: Start date (YYYY-MM-DD format) - currently ignored
+        end_date: End date (YYYY-MM-DD format) - currently ignored
+
+    Returns:
+        JSON with reservation data formatted to match PriceLabs API structure
+    """
+    try:
+        # Get portfolio info for the listing
+        portfolio_info = portfolio_manager.get_listing_portfolio(listing_id)
+
+        if not portfolio_info:
+            # Refresh and try again
+            portfolio_manager.refresh_all_listings()
+            portfolio_info = portfolio_manager.get_listing_portfolio(listing_id)
+
+            if not portfolio_info:
+                return jsonify({'error': f'Listing {listing_id} not found in any portfolio'}), 404
+
+        # Get the correct API client for this listing
+        api_client = portfolio_manager.get_api_client_for_listing(listing_id)
+
+        # First, try the actual reservation_data endpoint
+        start_date = request.args.get('start_date', '2025-10-24')  # Start from market data range
+        end_date = request.args.get('end_date', '2026-12-31')
+
+        # Get the PMS from the portfolio
+        listing_info = portfolio_manager.listing_cache.get(listing_id)
+        pms_name = listing_info.get('pms') if listing_info else None
+
+        reservation_data = api_client.get_reservation_data(
+            pms=pms_name,
+            start_date=start_date,
+            end_date=end_date,
+            limit=100,
+            offset=0
+        )
+
+        # If the API endpoint works, filter and return the data
+        if 'data' in reservation_data and not ('error' in reservation_data):
+            # Filter reservations to only include this listing
+            filtered_data = [
+                booking for booking in reservation_data['data']
+                if str(booking.get('listing_id')) == str(listing_id)
+            ]
+
+            return jsonify({
+                'data': filtered_data,
+                'pms_name': reservation_data.get('pms_name'),
+                'next_page': reservation_data.get('next_page', False)
+            })
+
+        # Fallback: Extract booking data from listing (like appscript.js does)
+        # This is needed because the reservation_data endpoint requires special access
+        listing_data = api_client.get_listing(listing_id)
+
+        # Handle response format
+        if isinstance(listing_data, dict):
+            if 'listings' in listing_data and listing_data['listings']:
+                listing = listing_data['listings'][0]
+            else:
+                listing = listing_data
+        else:
+            return jsonify({'error': 'Unexpected listing data format'}), 500
+
+        # Format reservation data from listing fields
+        formatted_reservations = []
+
+        # Create a reservation entry if we have last_booked_date
+        if listing.get('last_booked_date'):
+            formatted_reservations.append({
+                'listing_id': listing_id,
+                'check_in': listing.get('last_booked_date'),
+                'check_out': None,  # Not available in listing data
+                'no_of_days': 1,    # Estimate
+                'rental_revenue': listing.get('revenue_past_30', 0) / 30 if listing.get('revenue_past_30') else 0,
+                'booking_status': 'booked',
+                'reservation_id': f"estimated_{listing_id}",
+                'pms': listing.get('pms', 'airbnb')
+            })
+
+        # Return in PriceLabs API format
+        return jsonify({
+            'pms_name': listing.get('pms', 'airbnb'),
+            'next_page': False,
+            'data': formatted_reservations,
+            'note': 'Data extracted from listing fields (reservation endpoint not available)'
+        })
+
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 

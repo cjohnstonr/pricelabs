@@ -708,30 +708,31 @@
             text-align: center;
         }
         
-        .increase-significant { 
-            color: #16a34a; 
-            background: #dcfce7; 
-        } /* >10% increase */
-        
-        .increase-moderate { 
-            color: #65a30d; 
-            background: #f7fee7; 
-        } /* 2-10% increase */
-        
-        .decrease-significant { 
-            color: #dc2626; 
-            background: #fef2f2; 
-        } /* >10% decrease */
-        
-        .decrease-moderate { 
-            color: #ea580c; 
-            background: #fff7ed; 
-        } /* 2-10% decrease */
-        
-        .optimal { 
-            color: #0891b2; 
-            background: #f0f9ff; 
-        } /* Within 2% */
+        /* vs Top End Color Classes */
+        .above-top-end-high {
+            color: #dc2626;
+            background: #fef2f2;
+        } /* >10% above ceiling - danger zone */
+
+        .above-top-end-low {
+            color: #ea580c;
+            background: #fff7ed;
+        } /* 0-10% above ceiling - warning */
+
+        .below-top-end-close {
+            color: #d97706;
+            background: #fef3c7;
+        } /* 0-20% below ceiling - close to top */
+
+        .below-top-end-good {
+            color: #16a34a;
+            background: #dcfce7;
+        } /* 20-40% below ceiling - good gap pricing */
+
+        .below-top-end-aggressive {
+            color: #0891b2;
+            background: #f0f9ff;
+        } /* >40% below ceiling - very competitive */
         
         .our-avg-vs-market {
             font-weight: 600;
@@ -916,8 +917,8 @@
                             <th>Our Price</th>
                             <th>Median Booked</th>
                             <th>Our Avg vs Market</th>
-                            <th>Optimized Target</th>
-                            <th>Price Adjustment %</th>
+                            <th>Top End Pricing</th>
+                            <th>vs Top End</th>
                             <th>Min Stay</th>
                             <th>Gap Nights</th>
                             <th>Market Occ%</th>
@@ -1116,7 +1117,10 @@
                 updateLoadingStatus('Loading reservation data...');
                 let reservationData = null;
                 try {
-                    const reservationResponse = await fetch(`http://localhost:5050/api/reservation_data/${listingId}?start_date=2025-01-01&end_date=2025-12-31`);
+                    // Use date range from today through end of next year to capture future bookings
+                    const today = new Date().toISOString().split('T')[0];
+                    const endDate = new Date(new Date().getFullYear() + 1, 11, 31).toISOString().split('T')[0];
+                    const reservationResponse = await fetch(`http://localhost:5050/api/reservation_data/${listingId}?start_date=${today}&end_date=${endDate}`);
                     const reservationInfo = await reservationResponse.json();
                     
                     if (!reservationInfo.error) {
@@ -1179,7 +1183,7 @@
         function updateHeader() {
             const listing = listingData.listing_data;
             document.getElementById('property-name').textContent = listing.name || 'Property Name';
-            document.getElementById('property-id').textContent = listingData.listing_id;
+            document.getElementById('property-id').textContent = listing.id || listingData.listing_id;
             document.getElementById('platform').textContent = listing.pms?.toUpperCase() || 'AIRBNB';
             document.getElementById('bedrooms').textContent = listing.no_of_bedrooms || '1';
             
@@ -1824,18 +1828,69 @@
                 let avgPercentText = "N/A";
                 let avgPercentClass = "";
 
+                // Log for first row only to avoid spam
+                if (visibleIndex === 0) {
+                    console.group('💰 DEBUG: Pricing Column Calculation (first row)');
+                    console.log('1. bookedDaysInsights:', bookedDaysInsights);
+                    console.log('2. isDataAvailable:', bookedDaysInsights.isDataAvailable);
+                    console.log('3. pMedian:', pMedian);
+                    console.log('4. day.price:', day.price);
+                }
+
                 if (bookedDaysInsights.isDataAvailable && pMedian !== '-') {
                     const medianPrice = parseFloat(pMedian.replace('$', ''));
                     optimizedTarget = calculateOptimizedTarget(medianPrice, bookedDaysInsights.avgPercentVsMarket);
-                    
-                    if (optimizedTarget && day.price) {
-                        adjustmentPercent = calculatePriceAdjustment(day.price, optimizedTarget);
-                        adjustmentText = formatAdjustmentText(adjustmentPercent);
-                        adjustmentClass = getAdjustmentCategory(adjustmentPercent);
+
+                    if (visibleIndex === 0) {
+                        console.log('5. medianPrice:', medianPrice);
+                        console.log('6. optimizedTarget (Top End):', optimizedTarget);
                     }
-                    
+
+                    if (optimizedTarget && day.price) {
+                        // Calculate difference from top end (positive = above top end, negative = below)
+                        const dollarDifference = day.price - optimizedTarget;
+                        adjustmentPercent = (dollarDifference / optimizedTarget) * 100;
+
+                        // Format the text to show vs Top End
+                        if (dollarDifference > 0) {
+                            adjustmentText = `+$${Math.round(Math.abs(dollarDifference))} (${Math.abs(adjustmentPercent).toFixed(0)}% above)`;
+                        } else {
+                            adjustmentText = `-$${Math.round(Math.abs(dollarDifference))} (${Math.abs(adjustmentPercent).toFixed(0)}% below)`;
+                        }
+
+                        // Color coding: Red/Orange = above top end (risky), Yellow/Green/Blue = below (safe)
+                        if (adjustmentPercent > 10) {
+                            adjustmentClass = 'above-top-end-high';  // Red - danger zone
+                        } else if (adjustmentPercent > 0) {
+                            adjustmentClass = 'above-top-end-low';   // Orange - warning
+                        } else if (adjustmentPercent > -20) {
+                            adjustmentClass = 'below-top-end-close'; // Yellow - close to ceiling
+                        } else if (adjustmentPercent > -40) {
+                            adjustmentClass = 'below-top-end-good';  // Green - good gap pricing
+                        } else {
+                            adjustmentClass = 'below-top-end-aggressive'; // Blue - very competitive
+                        }
+
+                        if (visibleIndex === 0) {
+                            console.log('7. dollarDifference:', dollarDifference);
+                            console.log('8. adjustmentText:', adjustmentText);
+                            console.log('9. adjustmentClass:', adjustmentClass);
+                        }
+                    }
+
                     avgPercentText = `${bookedDaysInsights.avgPercentVsMarket >= 0 ? '+' : ''}${bookedDaysInsights.avgPercentVsMarket.toFixed(1)}%`;
                     avgPercentClass = bookedDaysInsights.avgPercentVsMarket >= 0 ? 'positive' : 'negative';
+
+                    if (visibleIndex === 0) {
+                        console.log('10. avgPercentText:', avgPercentText);
+                        console.log('11. avgPercentClass:', avgPercentClass);
+                        console.groupEnd();
+                    }
+                } else {
+                    if (visibleIndex === 0) {
+                        console.log('❌ Skipping calculation - conditions not met');
+                        console.groupEnd();
+                    }
                 }
 
                 row.innerHTML = `
@@ -1893,20 +1948,48 @@
         }
 
         function processBookedDaysData(reservationData) {
+            console.group('🔍 DEBUG: processBookedDaysData');
+            console.log('1. Reservation Data:', reservationData);
+
             if (!reservationData || !reservationData.data || reservationData.data.length === 0) {
+                console.warn('❌ No reservation data available');
+                console.groupEnd();
                 return [];
             }
+
+            console.log('2. Total reservation records:', reservationData.data.length);
+            console.log('3. Listing ID from listingData:', listingData.listing_data?.id);
 
             // Filter for valid bookings with revenue
-            const validBookings = reservationData.data.filter(booking => 
-                booking.booking_status === 'booked' && 
-                parseFloat(booking.rental_revenue) > 0 &&
-                booking.listing_id === listingData.listing_id
-            );
+            const validBookings = reservationData.data.filter(booking => {
+                const statusOk = booking.booking_status === 'booked';
+                const revenueOk = parseFloat(booking.rental_revenue) > 0;
+                const idMatch = String(booking.listing_id) === String(listingData.listing_data.id);
+
+                console.log(`   Booking ${booking.reservation_id}:`, {
+                    booking_listing_id: String(booking.listing_id),
+                    target_listing_id: String(listingData.listing_data.id),
+                    listing_id: booking.listing_id,
+                    status: booking.booking_status,
+                    statusOk,
+                    revenue: booking.rental_revenue,
+                    revenueOk,
+                    idMatch,
+                    passes: statusOk && revenueOk && idMatch
+                });
+
+                return statusOk && revenueOk && idMatch;
+            });
+
+            console.log('4. Valid bookings after filtering:', validBookings.length);
 
             if (validBookings.length === 0) {
+                console.warn('❌ No valid bookings found after filtering');
+                console.groupEnd();
                 return [];
             }
+
+            console.log('✅ Valid bookings:', validBookings);
 
             // Get median booked price data from neighborhood data
             const bedroomCount = listingData.listing_data.no_of_bedrooms || 1;
@@ -1922,41 +2005,65 @@
             // Process bookings and create comparison data
             const comparisonData = [];
 
-            validBookings.forEach(booking => {
+            console.log('6. Processing bookings for comparison data...');
+            console.log('   Bedroom count:', bedroomCount);
+            console.log('   medianPriceData available:', !!medianPriceData);
+            if (medianPriceData && medianPriceData.X_values) {
+                console.log('   Date range in market data:', medianPriceData.X_values[0], 'to', medianPriceData.X_values[medianPriceData.X_values.length - 1]);
+            }
+
+            validBookings.forEach((booking, idx) => {
                 const checkInDate = booking.check_in;
-                const nights = parseInt(booking.no_of_days);
+                const nights = parseInt(booking.no_of_days) || 1;
                 const nightlyRate = parseFloat(booking.rental_revenue) / nights;
-                
+
+                console.log(`\n   Processing booking ${idx + 1}:`, {
+                    checkInDate,
+                    nights,
+                    nightlyRate,
+                    totalRevenue: booking.rental_revenue
+                });
+
                 // Calculate average market median across all nights of the booking
                 let marketMedian = null;
-                
+
                 if (medianPriceData && medianPriceData.X_values && medianPriceData.Y_values) {
                     let totalMarketMedian = 0;
                     let validDays = 0;
-                    
+
                     // Loop through each night of the booking
                     for (let i = 0; i < nights; i++) {
                         const currentDate = dayjs(checkInDate).add(i, 'day').format('YYYY-MM-DD');
                         const dateIndex = medianPriceData.X_values.indexOf(currentDate);
-                        
+
+                        console.log(`     Night ${i + 1}: ${currentDate}, index: ${dateIndex}`);
+
                         if (dateIndex !== -1 && medianPriceData.Y_values[3] && medianPriceData.Y_values[3][dateIndex]) {
                             totalMarketMedian += medianPriceData.Y_values[3][dateIndex]; // Index 3 is median booked price
                             validDays++;
+                            console.log(`       ✅ Found market median: $${medianPriceData.Y_values[3][dateIndex]}`);
+                        } else {
+                            console.log(`       ❌ No market data for this date`);
                         }
                     }
-                    
+
                     // Calculate average market median if we have data for at least one day
                     if (validDays > 0) {
                         marketMedian = totalMarketMedian / validDays;
+                        console.log(`     Average market median: $${marketMedian.toFixed(2)} (${validDays} days)`);
+                    } else {
+                        console.log(`     ❌ No valid days found in market data`);
                     }
+                } else {
+                    console.log('     ❌ No median price data structure available');
                 }
 
                 if (marketMedian && marketMedian > 0) {
                     const checkOutDate = dayjs(checkInDate).add(nights, 'day').format('YYYY-MM-DD');
                     const percentageVsMarket = ((nightlyRate - marketMedian) / marketMedian) * 100;
                     const difference = nightlyRate - marketMedian;
-                    
-                    comparisonData.push({
+
+                    const comparisonEntry = {
                         checkIn: checkInDate,
                         checkOut: checkOutDate,
                         nights: nights,
@@ -1966,25 +2073,38 @@
                         difference: difference,
                         percentageVsMarket: percentageVsMarket,
                         bookingId: booking.reservation_id
-                    });
+                    };
+
+                    comparisonData.push(comparisonEntry);
+                    console.log(`     ✅ Added to comparison data:`, comparisonEntry);
+                } else {
+                    console.log(`     ❌ Skipped - no valid market median (marketMedian: ${marketMedian})`);
                 }
             });
 
             // Sort by check-in date
             comparisonData.sort((a, b) => new Date(a.checkIn) - new Date(b.checkIn));
 
+            console.log('5. Final comparison data:', comparisonData);
+            console.groupEnd();
+
             return comparisonData;
         }
 
         function updateBookedDaysSummary(comparisonData) {
+            console.group('📊 DEBUG: updateBookedDaysSummary');
+            console.log('1. Comparison data:', comparisonData);
+
             const totalBookings = comparisonData.length;
+            console.log('2. Total bookings:', totalBookings);
             const totalRevenue = comparisonData.reduce((sum, booking) => sum + booking.totalRevenue, 0);
             const avgDailyRevenue = totalRevenue / comparisonData.reduce((sum, booking) => sum + booking.nights, 0);
             const avgMarketMedian = comparisonData.reduce((sum, booking) => sum + booking.marketMedian, 0) / totalBookings;
-            
+
             // Calculate average percentage vs market
             const avgPercentVsMarket = comparisonData.reduce((sum, booking) => sum + booking.percentageVsMarket, 0) / totalBookings;
-            
+            console.log('3. Average percentage vs market:', avgPercentVsMarket);
+
             // Store insights globally for pricing optimization
             bookedDaysInsights = {
                 avgPercentVsMarket: avgPercentVsMarket,
@@ -1992,18 +2112,20 @@
                 isDataAvailable: true,
                 lastCalculated: new Date().toISOString()
             };
-            
-            document.getElementById('total-booked-days').textContent = 
+            console.log('4. bookedDaysInsights object created:', bookedDaysInsights);
+            console.groupEnd();
+
+            document.getElementById('total-booked-days').textContent =
                 comparisonData.reduce((sum, booking) => sum + booking.nights, 0);
             document.getElementById('avg-daily-revenue').textContent = `$${Math.round(avgDailyRevenue)}`;
             document.getElementById('vs-market-median').textContent = `$${Math.round(avgMarketMedian)}`;
             document.getElementById('total-revenue').textContent = `$${Math.round(totalRevenue)}`;
-            
+
             // Update the new average percentage stat with color coding
             const avgPercentElement = document.getElementById('avg-percent-vs-market');
             const percentText = `${avgPercentVsMarket >= 0 ? '+' : ''}${avgPercentVsMarket.toFixed(1)}%`;
             avgPercentElement.textContent = percentText;
-            
+
             // Add color coding based on performance
             avgPercentElement.className = `booked-days-stat-value ${avgPercentVsMarket >= 0 ? 'positive' : 'negative'}`;
         }
