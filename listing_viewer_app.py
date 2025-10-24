@@ -603,6 +603,11 @@ def booking_window_viewer():
     """Serve the booking window visualization HTML file"""
     return send_from_directory('.', 'booking_window_viewer.html')
 
+@app.route('/test_tooltip.html')
+def test_tooltip():
+    """Serve the tooltip test HTML file"""
+    return send_from_directory('.', 'test_tooltip.html')
+
 @app.route('/api/listing/<listing_id>')
 def get_listing_data(listing_id):
     """API endpoint to fetch listing data using portfolio mapping"""
