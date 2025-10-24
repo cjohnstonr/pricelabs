@@ -278,6 +278,7 @@
             padding: 24px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
             overflow-x: auto;
+            overflow-y: visible;
         }
         
         .table-container h3 {
@@ -331,8 +332,14 @@
             width: 100%;
             border-collapse: separate;
             border-spacing: 0;
+            overflow: visible;
         }
-        
+
+        /* Ensure table row containers allow tooltips to overflow */
+        tbody tr {
+            position: relative;
+        }
+
         thead th {
             background: #f8fafc;
             padding: 12px 16px;
@@ -745,6 +752,231 @@
         .our-avg-vs-market.negative {
             color: #dc2626;
         }
+
+        /* ============================================
+           BOOKING WINDOW RISK STYLING
+           ============================================ */
+
+        /* Cell container */
+        .booking-window-cell {
+            padding: 8px 12px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 13px;
+            position: relative;
+            overflow: visible;
+        }
+
+        /* Risk level base styles */
+        .booking-window-status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            white-space: nowrap;
+            position: relative;
+            cursor: help;
+            transition: all 0.2s ease;
+        }
+
+        .booking-window-status:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Safe - More than 7 days until window opens */
+        .risk-safe {
+            color: #16a34a;
+            background: #dcfce7;
+            border: 1px solid #86efac;
+        }
+
+        /* Watch - Within 7 days of window opening */
+        .risk-watch {
+            color: #d97706;
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+        }
+
+        /* Risk - Up to 7 days past window */
+        .risk-risk {
+            color: #ea580c;
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+        }
+
+        /* High Risk - More than 7 days past window */
+        .risk-high {
+            color: #dc2626;
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            animation: pulse-red 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.85; }
+        }
+
+        /* Booked - No risk */
+        .risk-booked {
+            color: #64748b;
+            background: transparent;
+            border: none;
+            cursor: default;
+        }
+
+        /* ============================================
+           TOOLTIP STYLING
+           ============================================ */
+
+        .booking-window-tooltip {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            background: #1f2937;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            z-index: 9999;
+            min-width: 280px;
+            max-width: 320px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: normal;
+        }
+
+        .booking-window-status:hover .booking-window-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(4px);
+            pointer-events: auto;
+        }
+
+        /* Tooltip arrow */
+        .booking-window-tooltip::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-bottom: 6px solid #1f2937;
+        }
+
+        .booking-window-tooltip strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #f3f4f6;
+        }
+
+        .booking-window-tooltip hr {
+            border: none;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            margin: 8px 0;
+        }
+
+        .tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .tooltip-label {
+            color: #d1d5db;
+            font-weight: 400;
+        }
+
+        .tooltip-value {
+            color: #ffffff;
+            font-weight: 500;
+        }
+
+        .tooltip-info {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 12px;
+            color: #d1d5db;
+            font-style: italic;
+        }
+
+        /* ============================================
+           HEADER STYLING
+           ============================================ */
+
+        .booking-window-header {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+            font-weight: 600;
+            padding: 12px 16px;
+            text-align: center;
+            border-radius: 8px 8px 0 0;
+        }
+
+        .booking-window-header .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .booking-window-header .header-icon {
+            font-size: 16px;
+        }
+
+        .booking-window-header .header-text {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .booking-window-header .header-help {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: help;
+            transition: background 0.2s ease;
+        }
+
+        .booking-window-header .header-help:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* ============================================
+           RESPONSIVE DESIGN
+           ============================================ */
+
+        @media (max-width: 768px) {
+            .booking-window-cell {
+                font-size: 11px;
+                padding: 6px 8px;
+            }
+
+            .booking-window-status {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+
+            .booking-window-tooltip {
+                min-width: 220px;
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -919,6 +1151,13 @@
                             <th>Our Avg vs Market</th>
                             <th>Top End Pricing</th>
                             <th>vs Top End</th>
+                            <th class="booking-window-header" title="Days until/past typical booking window">
+                                <div class="header-content">
+                                    <span class="header-icon">⏰</span>
+                                    <span class="header-text">Booking Window</span>
+                                    <span class="header-help" title="Shows when market typically books this date">?</span>
+                                </div>
+                            </th>
                             <th>Min Stay</th>
                             <th>Gap Nights</th>
                             <th>Market Occ%</th>
@@ -1042,6 +1281,9 @@
             lastCalculated: null
         };
 
+        // Global variable for booking window risk lookup table
+        let bookingWindowLookup = {};
+
         // Check URL params on load
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -1112,7 +1354,12 @@
                 }
                 
                 neighborhoodData = neighborData;
-                
+
+                // Build booking window lookup table from Market KPI data
+                const bedroomCount = listingData.listing_data.no_of_bedrooms || 5;
+                bookingWindowLookup = buildBookingWindowLookup(neighborData, bedroomCount);
+                console.log('[Dashboard] Booking window lookup table built:', bookingWindowLookup);
+
                 // Step 4: Load reservation data for booked days
                 updateLoadingStatus('Loading reservation data...');
                 let reservationData = null;
@@ -1893,6 +2140,10 @@
                     }
                 }
 
+                // Calculate booking window risk
+                const riskData = calculateBookingWindowRisk(day.date, day.demand_desc);
+                const bookingWindowCell = formatBookingWindowDisplay(riskData);
+
                 row.innerHTML = `
                     <td class="date-cell">${date.format('MMM D')}</td>
                     <td>${dayOfWeek}</td>
@@ -1901,6 +2152,7 @@
                     <td class="our-avg-vs-market ${avgPercentClass}">${avgPercentText}</td>
                     <td class="optimized-target">${optimizedTarget ? '$' + Math.round(optimizedTarget) : 'N/A'}</td>
                     <td class="price-adjustment ${adjustmentClass}">${adjustmentText}</td>
+                    <td class="booking-window-cell">${bookingWindowCell}</td>
                     <td>${day.min_stay || 1}</td>
                     <td>${gapNights}</td>
                     <td>${marketOcc}</td>
@@ -1915,6 +2167,193 @@
                 
                 tbody.appendChild(row);
             });
+        }
+
+        // ============= BOOKING WINDOW RISK FUNCTIONS =============
+
+        /**
+         * Builds a monthly booking window lookup table from Market KPI data
+         * @param {Object} neighborData - The neighborhood API response
+         * @param {number} bedroomCount - Number of bedrooms for the property
+         * @returns {Object} Monthly lookup table {Jan: 25, Feb: 28, ...}
+         */
+        function buildBookingWindowLookup(neighborData, bedroomCount = 5) {
+            const lookup = {};
+
+            if (!neighborData || !neighborData.data || !neighborData.data['Market KPI'] || !neighborData.data['Market KPI'].Category) {
+                console.error('[buildBookingWindowLookup] Invalid neighborhood data structure');
+                return lookup;
+            }
+
+            const marketKPI = neighborData.data['Market KPI'];
+            let categoryData = marketKPI.Category[bedroomCount.toString()];
+
+            if (!categoryData && marketKPI.Category['-1']) {
+                console.log('[buildBookingWindowLookup] Using fallback category -1 (all bedrooms)');
+                categoryData = marketKPI.Category['-1'];
+            }
+
+            if (!categoryData || !categoryData.X_values || !categoryData.Y_values || !categoryData.Y_values[1]) {
+                console.error('[buildBookingWindowLookup] Missing required data');
+                return lookup;
+            }
+
+            const xValues = categoryData.X_values;
+            const bookingWindows = categoryData.Y_values[1]; // Index 1 = Booking Window
+            const monthGroups = {};
+
+            for (let i = 0; i < xValues.length; i++) {
+                const period = xValues[i];
+                const window = bookingWindows[i];
+
+                if (period.includes('Last') || period.includes('Days')) continue;
+                if (window === null || window === undefined || window <= 0) continue;
+
+                const monthMatch = period.match(/^([A-Z][a-z]{2})/);
+                if (!monthMatch) continue;
+
+                const month = monthMatch[1];
+                if (!monthGroups[month]) monthGroups[month] = [];
+                monthGroups[month].push(window);
+            }
+
+            for (const month in monthGroups) {
+                const values = monthGroups[month];
+                const average = values.reduce((sum, val) => sum + val, 0) / values.length;
+                lookup[month] = Math.round(average);
+            }
+
+            const allMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const existingValues = Object.values(lookup);
+
+            if (existingValues.length > 0) {
+                const overallAverage = Math.round(existingValues.reduce((sum, val) => sum + val, 0) / existingValues.length);
+                for (const month of allMonths) {
+                    if (!lookup[month]) lookup[month] = overallAverage;
+                }
+            }
+
+            console.log('[buildBookingWindowLookup] Created lookup:', lookup);
+            return lookup;
+        }
+
+        /**
+         * Calculates booking window risk for a specific check-in date
+         * INCLUDES CRITICAL UTC DATE FIX for accurate day calculations
+         * @param {string} checkInDate - Check-in date in YYYY-MM-DD format
+         * @param {string} bookingStatus - Booking status ("Booked" or "")
+         * @param {Date} todayDate - Current date (for testing purposes)
+         * @returns {Object|null} Risk data object or null for booked/past dates
+         */
+        function calculateBookingWindowRisk(checkInDate, bookingStatus, todayDate = new Date()) {
+            if (bookingStatus === "Booked" || bookingStatus === "booked" || bookingStatus === "Unavailable") return null;
+
+            const checkIn = new Date(checkInDate);
+            if (isNaN(checkIn.getTime())) return null;
+
+            const today = new Date(todayDate);
+            today.setHours(0, 0, 0, 0);
+
+            const checkInOnly = new Date(checkIn);
+            checkInOnly.setHours(0, 0, 0, 0);
+
+            if (checkInOnly <= today) return null;
+
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthName = monthNames[checkIn.getMonth()];
+            const bookingWindow = bookingWindowLookup[monthName];
+
+            if (!bookingWindow || bookingWindow <= 0) return null;
+
+            const riskThresholdDate = new Date(checkIn);
+            riskThresholdDate.setDate(riskThresholdDate.getDate() - bookingWindow);
+
+            // CRITICAL FIX: UTC-based day calculation to avoid timezone issues
+            function daysBetween(date1, date2) {
+                const utc1 = Date.UTC(date1.getFullYear(), date1.getMonth(), date1.getDate());
+                const utc2 = Date.UTC(date2.getFullYear(), date2.getMonth(), date2.getDate());
+                return Math.floor((utc2 - utc1) / (24 * 60 * 60 * 1000));
+            }
+
+            const daysUntilWindow = daysBetween(today, riskThresholdDate);
+
+            let riskLevel, icon, displayText, colorClass;
+
+            if (daysUntilWindow > 7) {
+                riskLevel = 'safe';
+                icon = '✅';
+                displayText = `${icon} Opens in ${daysUntilWindow} ${daysUntilWindow === 1 ? 'day' : 'days'}`;
+                colorClass = 'risk-safe';
+            } else if (daysUntilWindow >= 0) {
+                riskLevel = 'watch';
+                icon = '⚠️';
+                displayText = daysUntilWindow === 0 ? `${icon} Opens today` : `${icon} Opens in ${daysUntilWindow} ${daysUntilWindow === 1 ? 'day' : 'days'}`;
+                colorClass = 'risk-watch';
+            } else if (daysUntilWindow >= -7) {
+                riskLevel = 'risk';
+                icon = '🚨';
+                const daysPast = Math.abs(daysUntilWindow);
+                displayText = `${icon} ${daysPast} ${daysPast === 1 ? 'day' : 'days'} overdue`;
+                colorClass = 'risk-risk';
+            } else {
+                riskLevel = 'high';
+                icon = '🔴';
+                const daysPast = Math.abs(daysUntilWindow);
+                displayText = `${icon} ${daysPast} days OVERDUE`;
+                colorClass = 'risk-high';
+            }
+
+            return {
+                bookingWindow,
+                riskThresholdDate: riskThresholdDate.toISOString().split('T')[0],
+                daysUntilWindow,
+                riskLevel,
+                displayText,
+                colorClass,
+                checkInDate,
+                monthName
+            };
+        }
+
+        /**
+         * Formats risk data for table display with tooltip
+         * @param {Object|null} riskData - Risk data from calculateBookingWindowRisk()
+         * @returns {string} HTML string for table cell
+         */
+        function formatBookingWindowDisplay(riskData) {
+            if (!riskData) {
+                return '<span class="booking-window-status risk-booked">—</span>';
+            }
+
+            const { displayText, colorClass, bookingWindow, riskThresholdDate, daysUntilWindow, monthName } = riskData;
+            const thresholdDate = new Date(riskThresholdDate);
+            const thresholdFormatted = thresholdDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            const tense = daysUntilWindow >= 0 ? 'opens' : 'opened';
+
+            return `
+                <span class="booking-window-status ${colorClass}">
+                    ${displayText}
+                    <div class="booking-window-tooltip">
+                        <strong>Booking Window Details</strong>
+                        <hr>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">Month:</span>
+                            <span class="tooltip-value">${monthName}</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">Typical window:</span>
+                            <span class="tooltip-value">${bookingWindow} days</span>
+                        </div>
+                        <div class="tooltip-row">
+                            <span class="tooltip-label">Window ${tense}:</span>
+                            <span class="tooltip-value">${thresholdFormatted}</span>
+                        </div>
+                        <div class="tooltip-info">
+                            <em>Market books ${monthName} dates ~${bookingWindow} days ahead</em>
+                        </div>
+                    </div>
+                </span>
+            `;
         }
 
         // ============= BOOKED DAYS COMPONENT FUNCTIONS =============
