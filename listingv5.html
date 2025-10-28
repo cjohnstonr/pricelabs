@@ -851,11 +851,24 @@
             white-space: normal;
         }
 
-        .booking-window-status:hover .booking-window-tooltip {
+        /* Global Tooltip Portal Container */
+        .tooltip-portal-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 99999;
+            /* Higher than tooltip's 9999 to ensure it's on top */
+        }
+
+        /* Hover rule DISABLED - JavaScript will handle tooltip visibility */
+        /* .booking-window-status:hover .booking-window-tooltip {
             opacity: 1;
             transform: translateX(-50%) translateY(4px);
             pointer-events: auto;
-        }
+        } */
 
         /* Tooltip arrow */
         .booking-window-tooltip::before {
@@ -1284,8 +1297,15 @@
         // Global variable for booking window risk lookup table
         let bookingWindowLookup = {};
 
+        // Tooltip Portal System
+        let activeTooltip = null;
+        let tooltipCleanupTimer = null;
+
         // Check URL params on load
         window.addEventListener('DOMContentLoaded', () => {
+            // Initialize tooltip portal system
+            createTooltipPortal();
+
             const urlParams = new URLSearchParams(window.location.search);
             const listingId = urlParams.get('listing_id');
             const portfolioKey = urlParams.get('portfolio_key');
@@ -2164,9 +2184,12 @@
                     <td>${p90}</td>
                     <td><span class="demand-badge ${demandClass}">${demandText}</span></td>
                 `;
-                
+
                 tbody.appendChild(row);
             });
+
+            // Initialize tooltip portals for newly rendered badges
+            initializeTooltipPortals();
         }
 
         // ============= BOOKING WINDOW RISK FUNCTIONS =============
@@ -2354,6 +2377,184 @@
                     </div>
                 </span>
             `;
+        }
+
+        // ============= TOOLTIP PORTAL SYSTEM =============
+
+        /**
+         * Creates global tooltip portal container in DOM if it doesn't exist
+         * Called once on DOMContentLoaded
+         */
+        function createTooltipPortal() {
+            if (document.getElementById('global-tooltip-portal')) {
+                return; // Already exists
+            }
+
+            const portal = document.createElement('div');
+            portal.id = 'global-tooltip-portal';
+            portal.className = 'tooltip-portal-container';
+            document.body.appendChild(portal);
+
+            console.log('[Tooltip Portal] Global container created');
+        }
+
+        /**
+         * Initializes tooltip event listeners for all booking window badges
+         * Called after table is rendered/updated
+         */
+        function initializeTooltipPortals() {
+            // Find all booking window status badges that have tooltips
+            const badges = document.querySelectorAll('.booking-window-status');
+
+            console.log(`[Tooltip Portal] Initializing ${badges.length} tooltip badges`);
+
+            badges.forEach(badge => {
+                const tooltip = badge.querySelector('.booking-window-tooltip');
+                if (!tooltip) return;
+
+                // Store reference to original parent for cleanup
+                if (!tooltip.dataset.initialized) {
+                    tooltip._originalParent = badge;
+                    tooltip.dataset.initialized = 'true';
+
+                    // Add event listeners to badge
+                    badge.addEventListener('mouseenter', handleBadgeHover);
+                    badge.addEventListener('mouseleave', handleBadgeLeave);
+                }
+            });
+        }
+
+        /**
+         * Handles mouseenter on booking window badge
+         * Portals the tooltip to global container and positions it
+         */
+        function handleBadgeHover(event) {
+            const badge = event.currentTarget;
+            const tooltip = badge.querySelector('.booking-window-tooltip');
+
+            if (!tooltip) return;
+
+            // Clear any pending cleanup
+            if (tooltipCleanupTimer) {
+                clearTimeout(tooltipCleanupTimer);
+                tooltipCleanupTimer = null;
+            }
+
+            // Hide any currently active tooltip
+            if (activeTooltip && activeTooltip !== tooltip) {
+                hideTooltip(activeTooltip);
+            }
+
+            // Show this tooltip
+            showTooltipInPortal(badge, tooltip);
+            activeTooltip = tooltip;
+        }
+
+        /**
+         * Handles mouseleave on booking window badge
+         * Hides tooltip with delay to allow moving to tooltip
+         */
+        function handleBadgeLeave(event) {
+            const badge = event.currentTarget;
+            const tooltip = badge.querySelector('.booking-window-tooltip');
+
+            if (!tooltip) return;
+
+            // Delay hiding to allow user to move mouse to tooltip
+            tooltipCleanupTimer = setTimeout(() => {
+                hideTooltip(tooltip);
+                if (activeTooltip === tooltip) {
+                    activeTooltip = null;
+                }
+            }, 100); // 100ms grace period
+        }
+
+        /**
+         * Shows tooltip in global portal with fixed positioning
+         * @param {HTMLElement} badge - The badge element being hovered
+         * @param {HTMLElement} tooltip - The tooltip to show
+         */
+        function showTooltipInPortal(badge, tooltip) {
+            const portal = document.getElementById('global-tooltip-portal');
+            if (!portal) {
+                console.error('[Tooltip Portal] Global container not found!');
+                return;
+            }
+
+            // Get badge position relative to viewport
+            const badgeRect = badge.getBoundingClientRect();
+
+            // Calculate tooltip position
+            const left = badgeRect.left + (badgeRect.width / 2);
+            const top = badgeRect.bottom + 4; // 4px gap (matches CSS)
+
+            // Move tooltip to portal
+            portal.appendChild(tooltip);
+
+            // Apply fixed positioning
+            tooltip.style.position = 'fixed';
+            tooltip.style.top = top + 'px';
+            tooltip.style.left = left + 'px';
+            tooltip.style.transform = 'translateX(-50%)'; // Center horizontally
+            tooltip.style.zIndex = '99999';
+
+            // Make visible (trigger CSS transition)
+            requestAnimationFrame(() => {
+                tooltip.style.opacity = '1';
+                tooltip.style.pointerEvents = 'auto';
+            });
+
+            console.log('[Tooltip Portal] Tooltip shown at', { left, top });
+        }
+
+        /**
+         * Hides tooltip and returns it to original parent
+         * @param {HTMLElement} tooltip - The tooltip to hide
+         */
+        function hideTooltip(tooltip) {
+            if (!tooltip) return;
+
+            // Fade out
+            tooltip.style.opacity = '0';
+            tooltip.style.pointerEvents = 'none';
+
+            // Wait for CSS transition (200ms) then return to parent
+            setTimeout(() => {
+                const originalParent = tooltip._originalParent;
+
+                if (originalParent && tooltip.style.opacity === '0') {
+                    // Return to original parent
+                    originalParent.appendChild(tooltip);
+
+                    // Reset to CSS-controlled positioning
+                    tooltip.style.position = '';
+                    tooltip.style.top = '';
+                    tooltip.style.left = '';
+                    tooltip.style.transform = '';
+                    tooltip.style.zIndex = '';
+
+                    console.log('[Tooltip Portal] Tooltip returned to original parent');
+                }
+            }, 200); // Match CSS transition duration
+        }
+
+        /**
+         * Cleanup function to remove all tooltip event listeners
+         * Useful for testing/debugging
+         */
+        function cleanupTooltipPortals() {
+            const badges = document.querySelectorAll('.booking-window-status');
+            badges.forEach(badge => {
+                badge.removeEventListener('mouseenter', handleBadgeHover);
+                badge.removeEventListener('mouseleave', handleBadgeLeave);
+            });
+
+            if (activeTooltip) {
+                hideTooltip(activeTooltip);
+                activeTooltip = null;
+            }
+
+            console.log('[Tooltip Portal] Cleaned up all tooltip listeners');
         }
 
         // ============= BOOKED DAYS COMPONENT FUNCTIONS =============
@@ -2656,5 +2857,9 @@
             });
         }
     </script>
+
+    <!-- Global Tooltip Portal Container -->
+    <div id="global-tooltip-portal" class="tooltip-portal-container"></div>
+
 </body>
 </html>

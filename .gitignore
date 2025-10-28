@@ -28,3 +28,7 @@ server.log
 
 # Test files
 test_suite/
+
+# Node
+node_modules/
+package-lock.json

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tooltip Position Test</title>
+    <style>
+        body {
+            padding: 50px;
+            font-family: Arial, sans-serif;
+        }
+
+        table {
+            border-collapse: separate;
+            border-spacing: 0;
+            overflow: visible;
+        }
+
+        tbody tr {
+            position: relative;
+        }
+
+        .booking-window-cell {
+            padding: 8px 12px;
+            text-align: center;
+            vertical-align: middle;
+            font-size: 13px;
+            position: relative;
+            overflow: visible;
+            border: 1px solid #ddd;
+        }
+
+        .booking-window-status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 500;
+            white-space: nowrap;
+            position: relative;
+            cursor: help;
+            transition: all 0.2s ease;
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .booking-window-tooltip {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%) translateY(8px);
+            background: #1f2937;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+            z-index: 9999;
+            min-width: 280px;
+            max-width: 320px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            font-size: 13px;
+            line-height: 1.6;
+            white-space: normal;
+        }
+
+        .booking-window-status:hover .booking-window-tooltip {
+            opacity: 1;
+            transform: translateX(-50%) translateY(4px);
+            pointer-events: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Tooltip Position Test</h1>
+    <p>Hover over the red badge below. The tooltip should appear DIRECTLY BELOW it, not centered on screen.</p>
+
+    <table>
+        <tbody>
+            <tr>
+                <td>Before</td>
+                <td class="booking-window-cell">
+                    <span class="booking-window-status">
+                        🔴 23 days OVERDUE
+                        <div class="booking-window-tooltip">
+                            <strong>Booking Window Details</strong>
+                            <hr style="border: none; border-top: 1px solid rgba(255,255,255,0.2); margin: 8px 0;">
+                            <div>Month: October</div>
+                            <div>Typical window: 25 days</div>
+                            <div>Window opened: Sep 29</div>
+                        </div>
+                    </span>
+                </td>
+                <td>After</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p style="margin-top: 100px;">If the tooltip appears centered on the screen instead of below the badge, there's a CSS conflict.</p>
+</body>
+</html>
